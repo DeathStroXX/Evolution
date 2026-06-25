@@ -173,7 +173,7 @@ function SummaryStat({
       <span
         className={
           accent
-            ? "text-3xl font-bold text-green-600"
+            ? "text-3xl font-bold text-primary"
             : "text-3xl font-bold"
         }
       >
@@ -216,12 +216,12 @@ function EventCard({
                 {referredCount} of {threshold} referred {noun}
               </span>
               {unlocked && (
-                <span className="font-medium text-green-600">Complete</span>
+                <span className="font-medium text-primary">Complete</span>
               )}
             </div>
             <Progress value={progressValue} />
             {unlocked && (
-              <p className="text-sm font-semibold text-green-600">
+              <p className="text-sm font-semibold text-primary">
                 Reward unlocked: {rule.rewardLabel}
               </p>
             )}
