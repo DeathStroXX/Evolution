@@ -16,6 +16,11 @@ export interface SerializedEvent {
   tags: string[];
 }
 
+export interface EventSocial {
+  count: number;
+  names: string[];
+}
+
 const FILTERS = ["All", "AI", "IT", "Startup", "Design", "Community"] as const;
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
@@ -29,6 +34,44 @@ function formatDate(iso?: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "Date TBA";
   return dateFormatter.format(d);
+}
+
+// Deterministic palette so the same name keeps the same color across renders.
+const AVATAR_COLORS = [
+  "bg-rose-500",
+  "bg-orange-500",
+  "bg-amber-500",
+  "bg-emerald-500",
+  "bg-teal-500",
+  "bg-sky-500",
+  "bg-indigo-500",
+  "bg-violet-500",
+];
+
+function initial(name: string) {
+  return name.trim().charAt(0).toUpperCase() || "?";
+}
+
+function colorFor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i += 1) {
+    hash = (hash * 31 + name.charCodeAt(i)) | 0;
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+function Avatar({ name }: { name: string }) {
+  return (
+    <span
+      title={name}
+      className={cn(
+        "flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold text-white ring-2 ring-white",
+        colorFor(name)
+      )}
+    >
+      {initial(name)}
+    </span>
+  );
 }
 
 function CalendarPlaceholder() {
@@ -56,7 +99,13 @@ function CalendarPlaceholder() {
   );
 }
 
-export default function EventsGrid({ events }: { events: SerializedEvent[] }) {
+export default function EventsGrid({
+  events,
+  social = {},
+}: {
+  events: SerializedEvent[];
+  social?: Record<string, EventSocial>;
+}) {
   const [active, setActive] = useState<string>("All");
 
   const filtered = useMemo(() => {
@@ -97,13 +146,15 @@ export default function EventsGrid({ events }: { events: SerializedEvent[] }) {
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((event) => (
+          {filtered.map((event) => {
+            const proof = social[event._id];
+            return (
             <Link
               key={event._id}
               href={`/events/${event._id}`}
               className="group block focus:outline-none"
             >
-              <Card className="h-full overflow-hidden border-border transition-all duration-200 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-md group-focus-visible:ring-2 group-focus-visible:ring-ring">
+              <Card className="flex h-full flex-col overflow-hidden border-border transition-all duration-200 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-md group-focus-visible:ring-2 group-focus-visible:ring-ring">
                 {/* Cover image / placeholder */}
                 {event.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -154,9 +205,24 @@ export default function EventsGrid({ events }: { events: SerializedEvent[] }) {
                     </div>
                   </CardContent>
                 )}
+
+                {/* Social proof — who's going */}
+                {proof && proof.count > 0 && (
+                  <div className="mt-auto flex items-center gap-3 border-t border-border px-6 py-4">
+                    <div className="flex -space-x-2">
+                      {proof.names.slice(0, 3).map((name, i) => (
+                        <Avatar key={`${name}-${i}`} name={name} />
+                      ))}
+                    </div>
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {proof.count === 1 ? "1 going" : `${proof.count} going`}
+                    </span>
+                  </div>
+                )}
               </Card>
             </Link>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

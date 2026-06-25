@@ -1,5 +1,8 @@
-import { events } from "@/lib/collections";
-import EventsGrid, { type SerializedEvent } from "@/components/EventsGrid";
+import { events, registrations, profiles } from "@/lib/collections";
+import EventsGrid, {
+  type SerializedEvent,
+  type EventSocial,
+} from "@/components/EventsGrid";
 
 // Events come from MongoDB at request time — never statically prerender.
 export const dynamic = "force-dynamic";
@@ -25,8 +28,45 @@ async function getEvents(): Promise<SerializedEvent[]> {
   }));
 }
 
+// Build a per-event "who's going" summary: total count + a few registrant names.
+async function getSocialProof(): Promise<Record<string, EventSocial>> {
+  const regCol = await registrations();
+  const regs = await regCol
+    .find({}, { projection: { eventId: 1, userId: 1 } })
+    .toArray();
+
+  if (regs.length === 0) return {};
+
+  // Resolve registrant display names in one batch.
+  const userIds = Array.from(
+    new Set(regs.map((r) => r.userId).filter(Boolean))
+  );
+  const profileCol = await profiles();
+  const profileDocs = await profileCol
+    .find({ _id: { $in: userIds } }, { projection: { name: 1 } })
+    .toArray();
+  const nameById = new Map(
+    profileDocs.map((p) => [String(p._id), p.name?.trim() || ""])
+  );
+
+  const social: Record<string, EventSocial> = {};
+  for (const reg of regs) {
+    const entry = (social[reg.eventId] ??= { count: 0, names: [] });
+    entry.count += 1;
+    if (entry.names.length < 3) {
+      const name = nameById.get(reg.userId);
+      if (name) entry.names.push(name);
+    }
+  }
+
+  return social;
+}
+
 export default async function EventsPage() {
-  const allEvents = await getEvents();
+  const [allEvents, social] = await Promise.all([
+    getEvents(),
+    getSocialProof(),
+  ]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
@@ -49,7 +89,7 @@ export default async function EventsPage() {
           </p>
         </div>
       ) : (
-        <EventsGrid events={allEvents} />
+        <EventsGrid events={allEvents} social={social} />
       )}
     </div>
   );

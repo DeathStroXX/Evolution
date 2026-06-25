@@ -183,6 +183,44 @@ export default function CheckinPage() {
                     </span>
                   </div>
                 )}
+
+                {/* Community connections — give the organizer something to
+                    suggest to the attendee at the check-in desk. */}
+                <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-white/5 p-5 text-left">
+                  <p className="text-sm font-semibold text-white/90">
+                    Community connections
+                  </p>
+                  <p className="mt-1 text-xs text-white/50">
+                    Suggest to the attendee:
+                  </p>
+                  <div className="mt-4 flex flex-col gap-2">
+                    <a
+                      href="https://discord.gg/yTF5KK3QpQ"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/10"
+                    >
+                      <span>Join Mainfranken Discord</span>
+                      <span aria-hidden="true" className="text-white/40">↗</span>
+                    </a>
+                    <a
+                      href="https://www.linkedin.com/company/it-mainfranken"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/10"
+                    >
+                      <span>Follow IT-Mainfranken on LinkedIn</span>
+                      <span aria-hidden="true" className="text-white/40">↗</span>
+                    </a>
+                    <a
+                      href="/events"
+                      className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/10"
+                    >
+                      <span>Browse more events</span>
+                      <span aria-hidden="true" className="text-white/40">→</span>
+                    </a>
+                  </div>
+                </div>
               </>
             ) : (
               <>
