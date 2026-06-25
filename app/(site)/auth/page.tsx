@@ -10,6 +10,9 @@ function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/events";
+  // Context cues only — these don't affect where login sends the user.
+  const cameFromRedirect = Boolean(searchParams.get("redirect"));
+  const wasInvited = Boolean(searchParams.get("ref"));
 
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -54,12 +57,22 @@ function AuthForm() {
         <span className="mb-2 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-base font-black text-primary-foreground">
           IT
         </span>
-        <CardTitle className="text-2xl">Join the community</CardTitle>
+        <CardTitle className="text-2xl">Join or sign in</CardTitle>
         <CardDescription>
-          Enter your details to register for events and track your rewards.
+          No password needed — just your name and email
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {cameFromRedirect && (
+          <div className="mb-4 rounded-md border border-primary/30 bg-primary/5 px-3 py-2.5 text-sm">
+            <p className="font-medium text-foreground">Sign in to continue</p>
+            {wasInvited && (
+              <p className="mt-0.5 text-muted-foreground">
+                You were invited! Sign in to claim your spot.
+              </p>
+            )}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="name" className="text-sm font-medium">
@@ -100,7 +113,7 @@ function AuthForm() {
           )}
 
           <Button type="submit" size="lg" disabled={submitting} className="mt-1">
-            {submitting ? "Joining…" : "Join"}
+            {submitting ? "Continuing…" : "Continue"}
           </Button>
         </form>
       </CardContent>

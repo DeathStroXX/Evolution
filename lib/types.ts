@@ -14,6 +14,7 @@ export interface Event {
   location?: string;
   sourceUrl?: string;
   imageUrl?: string;
+  coverImage?: string;
   tags: string[];
   organizerId?: string;
   seatLimit?: number;

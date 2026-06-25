@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
 interface MeProfile {
@@ -11,10 +12,16 @@ interface MeProfile {
 }
 
 export default function AuthButton() {
+  const pathname = usePathname();
   const [user, setUser] = useState<MeProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
 
+  // Re-check the session on every route change (deps: pathname). After login
+  // the auth page calls router.push(), a client-side navigation that changes
+  // the pathname — this re-runs the check so the nav immediately reflects the
+  // new session without a manual refresh. The focus listener still covers the
+  // case of returning to the tab from elsewhere.
   useEffect(() => {
     let cancelled = false;
     async function check() {
@@ -28,14 +35,12 @@ export default function AuthButton() {
       }
     }
     check();
-    // Re-check when the tab regains focus so the nav reflects a fresh login
-    // (e.g. after the auth page redirects back here).
     window.addEventListener("focus", check);
     return () => {
       cancelled = true;
       window.removeEventListener("focus", check);
     };
-  }, []);
+  }, [pathname]);
 
   async function handleSignOut() {
     setSigningOut(true);

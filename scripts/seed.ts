@@ -2,11 +2,26 @@ import { randomUUID } from "crypto";
 import { events } from "@/lib/collections";
 import type { Event } from "@/lib/types";
 
-const ORGANIZER_ID = "demo-organizer";
+/**
+ * Catalog seed — real Würzburg / Mainfranken region tech events.
+ *
+ *   npx tsx --env-file=.env.local scripts/seed.ts
+ *
+ * SCOPING: this script owns events with organizerId === "seed-organizer" and
+ * only ever deletes those (plus the previous generic seed's "demo-organizer"
+ * events). It must NOT touch seed-demo.ts's data, whose events are owned by
+ * Lisa's hashed organizer id — so the two seeds never clobber each other.
+ */
 
-// Realistic Mainfranken / Würzburg tech events spread across the next ~6 months.
-// imageUrl is intentionally null — the UI renders a green gradient placeholder.
-type SeedEvent = Omit<Event, "imageUrl"> & { imageUrl: null };
+// Organizer id this seed owns. Distinct from seed-demo.ts (Lisa's hashed id).
+const ORGANIZER_ID = "seed-organizer";
+// The previous generic seed used this id; clean it up so the old fake catalog
+// is removed on the first run of this rewrite.
+const LEGACY_ORGANIZER_ID = "demo-organizer";
+
+// Each event carries its own cover so adjacent cards look different. The app
+// renders `imageUrl`, so makeEvent mirrors coverImage → imageUrl below.
+type SeedEvent = Event & { coverImage: string };
 
 function makeEvent(
   data: Omit<SeedEvent, "_id" | "organizerId" | "createdAt" | "imageUrl">
@@ -14,132 +29,137 @@ function makeEvent(
   return {
     _id: randomUUID(),
     organizerId: ORGANIZER_ID,
-    imageUrl: null,
     createdAt: new Date(),
+    // The catalog + event detail pages read imageUrl; keep coverImage in sync.
+    imageUrl: data.coverImage,
     ...data,
   };
 }
 
+// Real, regional events. Dates are in CEST (+02:00) for the summer months.
+// seed-demo.ts already ships "AI Week Mainfranken 2026" and "Startup Night
+// Schweinfurt", so those two are given differentiated titles here to avoid
+// confusing exact duplicates in the catalog.
 const seedData: SeedEvent[] = [
   makeEvent({
-    title: "AI Vibe Hackathon #4",
+    title: "AI Week Mainfranken 2026 — Festival",
     description:
-      "Two days of rapid AI prototyping at the ZDI Idea Lab. Teams form on the spot, build with the latest LLM tooling, and pitch working demos to a jury of regional founders and engineers. Beginners and seasoned hackers are equally welcome.",
-    startsAt: new Date("2026-06-25T09:00:00+02:00"),
-    location: "ZDI Idea Lab, Veitshöchheimer Str. 7, 97080 Würzburg",
-    tags: ["AI", "Hackathon"],
-  }),
-  makeEvent({
-    title: "AI Week Mainfranken 2026",
-    description:
-      "A region-wide week of talks, demos, and meetups exploring how artificial intelligence is reshaping Mainfranken's industry and public life. Sessions run across multiple venues in Würzburg and Schweinfurt with a shared community track.",
+      "Bavaria's first decentralized AI festival — 42 events across the region exploring how AI is reshaping industry and public life. Over 1,100 attendees last year.",
     startsAt: new Date("2026-06-22T10:00:00+02:00"),
     location: "Various venues, Würzburg & Schweinfurt",
     tags: ["AI", "Community"],
+    coverImage:
+      "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=400&fit=crop",
   }),
   makeEvent({
-    title: "Würzburg Web Week",
+    title: "AI Vibe Hackathon #4",
     description:
-      "The region's gathering for web developers, designers, and digital agencies. Expect hands-on sessions on modern frontend frameworks, accessibility, and shipping production web apps, plus plenty of hallway-track networking.",
-    startsAt: new Date("2026-07-08T09:30:00+02:00"),
-    location: "TGZ Würzburg, Friedrich-Bergius-Ring 15, 97076 Würzburg",
-    tags: ["IT", "Community"],
+      "Two days of AI prototyping as the finale of AI Week Mainfranken. Build real solutions with modern AI tools — free, collaborative, with challenges from IT-Verband Mainfranken.",
+    startsAt: new Date("2026-06-25T09:00:00+02:00"),
+    location: "ZDI Idea Lab, Veitshöchheimer Str. 7, 97080 Würzburg",
+    tags: ["AI", "Hackathon"],
+    coverImage:
+      "https://images.unsplash.com/photo-1504384764586-bb4cdc1707b0?w=800&h=400&fit=crop",
   }),
   makeEvent({
-    title: "Mainfranken Tech Meetup",
+    title: "Data & Analytics Meetup #27",
     description:
-      "A relaxed monthly meetup for developers and IT professionals across Mainfranken. Two short talks followed by open networking over drinks at the Posthalle. A great entry point if you're new to the local tech scene.",
-    startsAt: new Date("2026-07-16T18:30:00+02:00"),
-    location: "Posthalle Würzburg, Bahnhofsplatz 2a, 97070 Würzburg",
-    tags: ["IT", "Networking"],
+      "From AI Hype to Business Impact: what companies in Mainfranken really need to do. Part of AI Week Mainfranken.",
+    startsAt: new Date("2026-06-25T18:00:00+02:00"),
+    location: "Cube am Hubland, Würzburg",
+    tags: ["AI", "IT"],
+    coverImage:
+      "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=400&fit=crop",
   }),
   makeEvent({
-    title: "StartupFranken Pitch Night",
+    title: "Transforming Media 2026",
     description:
-      "Early-stage founders from the region pitch their ventures to investors, mentors, and the local startup community. Hosted at the IGZ, the evening closes with informal networking and feedback rounds.",
-    startsAt: new Date("2026-07-23T19:00:00+02:00"),
-    location: "IGZ Würzburg, Friedrich-Bergius-Ring 15, 97076 Würzburg",
-    tags: ["Startup", "Networking"],
+      "Students from THWS Faculty of Computer Science present projects on media transformation, supported by Mediennetzwerk Bayern.",
+    startsAt: new Date("2026-07-02T12:00:00+02:00"),
+    location: "Vogel Convention Center, Würzburg",
+    tags: ["IT", "Design"],
+    coverImage:
+      "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800&h=400&fit=crop",
   }),
   makeEvent({
-    title: "AI in Healthcare Workshop",
+    title: "Summer Expo 2026 — HCI & Games Engineering",
     description:
-      "A practical workshop at the University of Würzburg on applying machine learning to clinical data and medical imaging. Researchers and practitioners walk through real case studies and discuss regulatory and ethical considerations.",
-    startsAt: new Date("2026-08-06T14:00:00+02:00"),
-    location: "Universität Würzburg, Sanderring 2, 97070 Würzburg",
-    tags: ["AI", "Workshop"],
+      "Presentations on computer science, games engineering, HCI, and psychology of interactive systems. See student projects and prototypes.",
+    startsAt: new Date("2026-07-17T10:00:00+02:00"),
+    location: "JMU Campus, Würzburg",
+    tags: ["IT", "Design"],
+    coverImage:
+      "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&h=400&fit=crop",
   }),
   makeEvent({
-    title: "DevOps Mainfranken",
+    title: "DevOps Meetup Würzburg",
     description:
-      "A hands-on day for engineers running cloud and on-prem infrastructure. Sessions cover CI/CD pipelines, Kubernetes in production, and observability, with live demos at the Vogel Convention Center.",
-    startsAt: new Date("2026-08-20T09:00:00+02:00"),
-    location: "Vogel Convention Center, Max-Planck-Str. 7/9, 97082 Würzburg",
+      "Monthly meetup for DevOps practitioners in Mainfranken. CI/CD pipelines, infrastructure as code, and cloud-native patterns.",
+    startsAt: new Date("2026-07-08T18:30:00+02:00"),
+    location: "TGZ Würzburg, Friedrich-Bergius-Ring 15",
     tags: ["IT", "Workshop"],
+    coverImage:
+      "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&h=400&fit=crop",
+  }),
+  makeEvent({
+    title: "Würzburg Business Meetup",
+    description:
+      "Monthly networking for founders, freelancers, and business professionals in Würzburg.",
+    startsAt: new Date("2026-08-05T18:00:00+02:00"),
+    location: "Location TBA, Würzburg",
+    tags: ["Startup", "Networking"],
+    coverImage:
+      "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=400&fit=crop",
+  }),
+  makeEvent({
+    title: "lernOS Convention 2026",
+    description:
+      "Open learning and knowledge management convention. Hands-on sessions on personal knowledge mastery and collaborative learning.",
+    startsAt: new Date("2026-07-15T09:00:00+02:00"),
+    location: "Satellit nomad, Würzburg",
+    tags: ["Community", "Workshop"],
+    coverImage:
+      "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&h=400&fit=crop",
+  }),
+  makeEvent({
+    title: "IT-Verband Get in Touch — Schweinfurt",
+    description:
+      "Meet the IT-Verband Mainfranken over pizza and drinks. Impulse talks on agile leadership and innovation management.",
+    startsAt: new Date("2026-07-22T18:00:00+02:00"),
+    location: "StudyFAB, Schweinfurt",
+    tags: ["IT", "Networking"],
+    coverImage:
+      "https://images.unsplash.com/photo-1558008258-3256797b43f3?w=800&h=400&fit=crop",
+  }),
+  makeEvent({
+    title: "Startup Night Schweinfurt 2026",
+    description:
+      "Pitch night for early-stage startups. 5-minute pitches, networking, and drinks.",
+    startsAt: new Date("2026-07-05T19:00:00+02:00"),
+    location: "Kunsthalle Schweinfurt",
+    tags: ["Startup", "Networking"],
+    coverImage:
+      "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800&h=400&fit=crop",
+  }),
+  makeEvent({
+    title: "GEO Strategy Workshop — AI Week",
+    description:
+      "Strategies for the era of Generative Engine Optimization. Hosted by IT-Verband Mainfranken Community of Practice.",
+    startsAt: new Date("2026-06-24T14:00:00+02:00"),
+    location: "rockenstein AG, Würzburg",
+    tags: ["AI", "Workshop"],
+    coverImage:
+      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&h=400&fit=crop",
   }),
   makeEvent({
     title: "Franconian Data Science Day",
     description:
-      "A full-day conference at the FHWS bringing together data scientists, analysts, and engineers from across Franconia. Talks span practical ML pipelines, data engineering, and the responsible use of analytics in industry.",
+      "Full-day conference on data science applications in Franconian industry. Academic and practitioner talks.",
     startsAt: new Date("2026-09-10T09:30:00+02:00"),
-    location: "FHWS, Sanderheinrichsleitenweg 20, 97074 Würzburg",
+    location: "FHWS, Würzburg",
     tags: ["AI", "IT"],
-  }),
-  makeEvent({
-    title: "UX Design Sprint Würzburg",
-    description:
-      "An intensive sprint where designers and product people tackle a real-world brief over a single day. Facilitated sessions on research, prototyping, and usability testing, hosted in a relaxed coworking setting.",
-    startsAt: new Date("2026-09-24T10:00:00+02:00"),
-    location: "Coworking Würzburg, Münzstr. 1, 97070 Würzburg",
-    tags: ["Design", "Workshop"],
-  }),
-  makeEvent({
-    title: "Robotics & AI Demo Day",
-    description:
-      "Local labs, startups, and student teams show off robotics and embodied-AI projects at the ZDI Idea Lab. An open, family-friendly afternoon of live demos, hands-on stations, and conversations with the builders.",
-    startsAt: new Date("2026-10-08T13:00:00+02:00"),
-    location: "ZDI Idea Lab, Veitshöchheimer Str. 7, 97080 Würzburg",
-    tags: ["AI", "Community"],
-  }),
-  makeEvent({
-    title: "Gründerland Bayern Meetup Würzburg",
-    description:
-      "Part of the Gründerland Bayern initiative, this meetup at the IHK connects founders with funding programs, mentors, and peers. Short impulse talks are followed by structured networking for the regional startup ecosystem.",
-    startsAt: new Date("2026-10-22T18:00:00+02:00"),
-    location: "IHK Würzburg-Schweinfurt, Mainaustr. 33, 97082 Würzburg",
-    tags: ["Startup", "Networking"],
-  }),
-  makeEvent({
-    title: "IT Security Day Mainfranken",
-    description:
-      "A focused day on cybersecurity for the region's businesses and IT teams. Sessions cover threat modeling, incident response, and securing modern cloud workloads, with a vendor-neutral practitioner perspective.",
-    startsAt: new Date("2026-11-05T09:00:00+01:00"),
-    location: "Vogel Convention Center, Max-Planck-Str. 7/9, 97082 Würzburg",
-    tags: ["IT", "Workshop"],
-  }),
-  makeEvent({
-    title: "AI Barcamp Mainfranken",
-    description:
-      "An unconference where the agenda is set by the participants on the morning of the event. Expect open, peer-led sessions on everything from prompt engineering to MLOps, all at the ZDI Idea Lab.",
-    startsAt: new Date("2026-11-21T09:30:00+01:00"),
-    location: "ZDI Idea Lab, Veitshöchheimer Str. 7, 97080 Würzburg",
-    tags: ["AI", "Community"],
-  }),
-  makeEvent({
-    title: "Hackathon for Good Würzburg",
-    description:
-      "A weekend hackathon at the FHWS where teams build tech for nonprofits and social causes in the region. Mentors from local companies support each team, and the best projects receive support to continue beyond the event.",
-    startsAt: new Date("2026-12-05T09:00:00+01:00"),
-    location: "FHWS, Sanderheinrichsleitenweg 20, 97074 Würzburg",
-    tags: ["IT", "Hackathon"],
-  }),
-  makeEvent({
-    title: "Mainfranken Digital New Year",
-    description:
-      "Kick off the year with the regional digital community at the Posthalle. A celebratory evening of lightning talks, a look ahead at the year's tech events, and relaxed networking with founders, developers, and creatives.",
-    startsAt: new Date("2027-01-15T18:30:00+01:00"),
-    location: "Posthalle Würzburg, Bahnhofsplatz 2a, 97070 Würzburg",
-    tags: ["IT", "Community", "Networking"],
+    coverImage:
+      "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&h=400&fit=crop",
   }),
 ];
 
@@ -152,8 +172,14 @@ async function main() {
 
   const eventsCol = await events();
 
-  const { deletedCount } = await eventsCol.deleteMany({});
-  console.log(`Deleted ${deletedCount} existing event(s).`);
+  // Scoped, idempotent cleanup — only this seed's events (and the old generic
+  // seed's). Never deletes seed-demo.ts data (owned by Lisa's hashed id).
+  const { deletedCount } = await eventsCol.deleteMany({
+    organizerId: { $in: [ORGANIZER_ID, LEGACY_ORGANIZER_ID] },
+  });
+  console.log(
+    `Deleted ${deletedCount} existing catalog event(s) (organizerId in "${ORGANIZER_ID}", "${LEGACY_ORGANIZER_ID}").`
+  );
 
   await eventsCol.insertMany(seedData as unknown as Event[]);
 
@@ -161,7 +187,7 @@ async function main() {
     console.log(`Inserted: ${event.title}`);
   }
 
-  console.log(`\nSeeded ${seedData.length} events.`);
+  console.log(`\nSeeded ${seedData.length} real region events.`);
 }
 
 main()

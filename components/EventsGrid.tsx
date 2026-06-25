@@ -13,6 +13,7 @@ export interface SerializedEvent {
   startsAt?: string;
   location?: string;
   imageUrl?: string;
+  coverImage?: string;
   tags: string[];
 }
 
@@ -111,27 +112,17 @@ function RewardBanner({ eventId }: { eventId: string }) {
   );
 }
 
-function CalendarPlaceholder() {
+// Lime-tinted gradient shown when an event has no cover image. Image-forward,
+// Luma-style — no calendar icon, just a soft brand wash.
+function CoverPlaceholder({ title }: { title: string }) {
   return (
-    <div className="flex aspect-[16/9] w-full items-center justify-center border-b border-border bg-muted">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="40"
-        height="40"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="text-muted-foreground/50"
-        aria-hidden="true"
-      >
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-        <line x1="16" y1="2" x2="16" y2="6" />
-        <line x1="8" y1="2" x2="8" y2="6" />
-        <line x1="3" y1="10" x2="21" y2="10" />
-      </svg>
+    <div
+      aria-hidden="true"
+      className="flex aspect-[2/1] w-full items-center justify-center bg-gradient-to-br from-primary/20 via-primary/5 to-background"
+    >
+      <span className="text-3xl font-black uppercase text-primary/40">
+        {initial(title)}
+      </span>
     </div>
   );
 }
@@ -216,22 +207,23 @@ export default function EventsGrid({
               href={`/events/${event._id}`}
               className="group block focus:outline-none"
             >
-              <Card className="relative flex h-full flex-col overflow-hidden border-border transition-all duration-200 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-md group-focus-visible:ring-2 group-focus-visible:ring-ring">
+              <Card className="relative flex h-full flex-col overflow-hidden rounded-xl border-border shadow-sm transition-all duration-200 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-md group-focus-visible:ring-2 group-focus-visible:ring-ring">
                 {isRegistered && (
                   <span className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground shadow">
                     Registered ✓
                   </span>
                 )}
                 {/* Cover image / placeholder */}
-                {event.imageUrl ? (
+                {event.coverImage || event.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={event.imageUrl}
+                    src={event.coverImage || event.imageUrl}
                     alt={event.title}
-                    className="aspect-[16/9] w-full border-b border-border object-cover"
+                    loading="lazy"
+                    className="aspect-[2/1] w-full bg-muted object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                   />
                 ) : (
-                  <CalendarPlaceholder />
+                  <CoverPlaceholder title={event.title} />
                 )}
 
                 <CardHeader className="space-y-2">

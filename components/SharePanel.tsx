@@ -29,14 +29,33 @@ function extractUserId(data: unknown): string | null {
   return typeof id === "string" ? id : null;
 }
 
+/** Event details available to every platform's message template. */
+interface ShareContext {
+  title: string;
+  date?: string;
+  location?: string;
+}
+
+// Small helpers so templates read cleanly and degrade gracefully when an event
+// is missing a date or location.
+const onDate = (d?: string) => (d ? ` on ${d}` : "");
+const inLocation = (l?: string) => (l ? ` in ${l}` : "");
+const atLocation = (l?: string) => (l ? ` at ${l}` : "");
+const whenWhere = (c: ShareContext) => {
+  const parts = [c.date, c.location].filter(Boolean);
+  return parts.length ? ` (${parts.join(", ")})` : "";
+};
+
 interface SharePlatform {
   key: string;
   label: string;
   /** Tailwind color classes for the icon button accent on hover. */
   hover: string;
   icon: React.ReactNode;
-  /** Build the platform share URL given the prefilled message + referral link. */
-  href?: (message: string, link: string) => string;
+  /** The full, ready-to-paste message for this platform (link inline). */
+  message: (ctx: ShareContext, link: string) => string;
+  /** Build the platform share URL. Omitted for copy-only platforms (Discord). */
+  href?: (ctx: ShareContext, link: string) => string;
   /** Platforms without a share URL (e.g. Discord) copy the message instead. */
   copy?: boolean;
 }
@@ -77,41 +96,71 @@ const DiscordIcon = (
   </svg>
 );
 
+// Platform-specific copy. Each returns the full message with the referral link
+// placed where that platform reads best.
+const MESSAGES = {
+  whatsapp: (c: ShareContext, link: string) =>
+    `Hey! 👋 I'm going to ${c.title}${onDate(c.date)}${inLocation(
+      c.location
+    )}. Come join me! ${link}`,
+  telegram: (c: ShareContext, link: string) =>
+    `Going to ${c.title}${whenWhere(c)}. Join me! ${link}`,
+  x: (c: ShareContext, link: string) =>
+    `Excited for ${c.title}${inLocation(
+      c.location
+    )}! 🚀 ${link} #Mainfranken #Tech`,
+  linkedin: (c: ShareContext, link: string) =>
+    `I'll be attending ${c.title}${onDate(c.date)}${atLocation(
+      c.location
+    )}. Great opportunity for networking and learning. Join me: ${link}`,
+  reddit: (c: ShareContext, link: string) =>
+    `Anyone going to ${c.title}${onDate(c.date)}? Here's the signup link: ${link}`,
+  discord: (c: ShareContext, link: string) =>
+    `yo check out ${c.title}${onDate(c.date)} — ${link}`,
+} satisfies Record<string, (c: ShareContext, link: string) => string>;
+
 const PLATFORMS: SharePlatform[] = [
   {
     key: "whatsapp",
     label: "WhatsApp",
     hover: "hover:border-green-600 hover:text-green-600",
     icon: WhatsAppIcon,
-    href: (message, link) =>
-      `https://wa.me/?text=${encodeURIComponent(`${message} ${link}`)}`,
+    message: MESSAGES.whatsapp,
+    href: (c, link) =>
+      `https://wa.me/?text=${encodeURIComponent(MESSAGES.whatsapp(c, link))}`,
   },
   {
     key: "telegram",
     label: "Telegram",
     hover: "hover:border-sky-500 hover:text-sky-500",
     icon: TelegramIcon,
-    href: (message, link) =>
+    message: MESSAGES.telegram,
+    // Telegram renders the url param as a link preview, so the text omits it.
+    href: (c, link) =>
       `https://t.me/share/url?url=${encodeURIComponent(
         link
-      )}&text=${encodeURIComponent(message)}`,
+      )}&text=${encodeURIComponent(`Going to ${c.title}${whenWhere(c)}. Join me!`)}`,
   },
   {
     key: "x",
     label: "X",
     hover: "hover:border-foreground hover:text-foreground",
     icon: XIcon,
-    href: (message, link) =>
+    message: MESSAGES.x,
+    // Link is inline (before the hashtags), so don't also pass a url param.
+    href: (c, link) =>
       `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-        message
-      )}&url=${encodeURIComponent(link)}`,
+        MESSAGES.x(c, link)
+      )}`,
   },
   {
     key: "linkedin",
     label: "LinkedIn",
     hover: "hover:border-blue-700 hover:text-blue-700",
     icon: LinkedInIcon,
-    href: (message, link) =>
+    message: MESSAGES.linkedin,
+    // LinkedIn's share-offsite endpoint only accepts a url — no prefilled text.
+    href: (_c, link) =>
       `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
         link
       )}`,
@@ -121,16 +170,21 @@ const PLATFORMS: SharePlatform[] = [
     label: "Reddit",
     hover: "hover:border-orange-600 hover:text-orange-600",
     icon: RedditIcon,
-    href: (message, link) =>
+    message: MESSAGES.reddit,
+    // Reddit takes the link in `url` and the question as the post `title`.
+    href: (c, link) =>
       `https://www.reddit.com/submit?url=${encodeURIComponent(
         link
-      )}&title=${encodeURIComponent(message)}`,
+      )}&title=${encodeURIComponent(
+        `Anyone going to ${c.title}${onDate(c.date)}?`
+      )}`,
   },
   {
     key: "discord",
     label: "Discord",
     hover: "hover:border-indigo-500 hover:text-indigo-500",
     icon: DiscordIcon,
+    message: MESSAGES.discord,
     copy: true,
   },
 ];
@@ -234,15 +288,21 @@ export default function SharePanel({
     return `${base}/events/${eventId}?ref=${code}`;
   }, [origin, eventId, code]);
 
-  // Richer message for group chats — gracefully omits date/location if absent.
+  const shareContext: ShareContext = {
+    title: eventTitle,
+    date: eventDate,
+    location: eventLocation,
+  };
+
+  // Generic, platform-neutral invite used by the "Copy link" section.
   const datePart = eventDate ? ` on ${eventDate}` : "";
   const locationPart = eventLocation ? ` at ${eventLocation}` : "";
-  const shareMessage = `I'm attending ${eventTitle}${datePart}${locationPart}. Would love to see you there! Register here:`;
+  const genericMessage = `I'm attending ${eventTitle}${datePart}${locationPart}. Would love to see you there! Register here:`;
 
   async function handleCopy() {
     if (!referralLink) return;
     try {
-      await navigator.clipboard.writeText(referralLink);
+      await navigator.clipboard.writeText(`${genericMessage} ${referralLink}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -250,9 +310,9 @@ export default function SharePanel({
     }
   }
 
-  async function handleDiscordCopy(trackedLink: string) {
+  async function handleDiscordCopy(message: string) {
     try {
-      await navigator.clipboard.writeText(`${shareMessage} ${trackedLink}`);
+      await navigator.clipboard.writeText(message);
       setToast("Message copied! Paste it in Discord");
     } catch {
       setToast("Couldn't copy — copy your link below instead");
@@ -364,7 +424,7 @@ export default function SharePanel({
                       type="button"
                       onClick={() => {
                         awardSharePoints(p.key);
-                        void handleDiscordCopy(trackedLink);
+                        void handleDiscordCopy(p.message(shareContext, trackedLink));
                       }}
                       aria-label={`Copy message for ${p.label}`}
                       title={`Copy message for ${p.label}`}
@@ -378,7 +438,7 @@ export default function SharePanel({
                 return (
                   <a
                     key={p.key}
-                    href={p.href!(shareMessage, trackedLink)}
+                    href={p.href!(shareContext, trackedLink)}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => awardSharePoints(p.key)}
@@ -404,7 +464,7 @@ export default function SharePanel({
             {/* Secondary action: copy the raw link */}
             <div className="flex flex-col gap-2 border-t border-border pt-4">
               <p className="text-sm font-medium text-foreground/70">
-                Or copy your link
+                Or copy a ready-to-share invite
               </p>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <input
