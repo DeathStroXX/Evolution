@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { events, registrations } from "@/lib/collections";
+import { events, registrations, profiles } from "@/lib/collections";
 import { Badge } from "@/components/ui/badge";
 import RegisterButton from "@/components/RegisterButton";
 import SharePanel from "@/components/SharePanel";
@@ -24,6 +24,26 @@ function formatDateTime(value?: Date) {
   return dateTimeFormatter.format(d);
 }
 
+// Deterministic palette so the same name keeps the same color across renders.
+const AVATAR_COLORS = [
+  "bg-rose-500",
+  "bg-orange-500",
+  "bg-amber-500",
+  "bg-emerald-500",
+  "bg-teal-500",
+  "bg-sky-500",
+  "bg-indigo-500",
+  "bg-violet-500",
+];
+
+function colorFor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i += 1) {
+    hash = (hash * 31 + name.charCodeAt(i)) | 0;
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
 export default async function EventDetailPage({
   params,
 }: {
@@ -37,9 +57,24 @@ export default async function EventDetailPage({
   }
 
   const registrationsCol = await registrations();
-  const registeredCount = await registrationsCol.countDocuments({
-    eventId: params.id,
-  });
+  const regs = await registrationsCol
+    .find({ eventId: params.id }, { projection: { userId: 1 } })
+    .toArray();
+  const registeredCount = regs.length;
+
+  // Resolve a few registrant display names for the "Who's going" avatars.
+  const userIds = Array.from(
+    new Set(regs.map((r) => r.userId).filter(Boolean))
+  );
+  const profileCol = await profiles();
+  const profileDocs = await profileCol
+    .find({ _id: { $in: userIds } }, { projection: { name: 1 } })
+    .toArray();
+  const registrantNames = profileDocs
+    .map((p) => p.name?.trim())
+    .filter((n): n is string => Boolean(n));
+  const shownNames = registrantNames.slice(0, 5);
+  const moreCount = registeredCount - shownNames.length;
 
   return (
     <article className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
@@ -181,6 +216,29 @@ export default async function EventDetailPage({
             ? "1 person registered"
             : `${registeredCount} people registered`}
         </p>
+
+        {shownNames.length > 0 && (
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <div className="flex -space-x-2">
+              {shownNames.map((name, i) => (
+                <span
+                  key={`${name}-${i}`}
+                  title={name}
+                  className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white ring-2 ring-background ${colorFor(
+                    name
+                  )}`}
+                >
+                  {name.charAt(0).toUpperCase()}
+                </span>
+              ))}
+            </div>
+            {moreCount > 0 && (
+              <span className="text-sm text-muted-foreground">
+                and {moreCount} more
+              </span>
+            )}
+          </div>
+        )}
       </section>
     </article>
   );
