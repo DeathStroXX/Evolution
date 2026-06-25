@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { randomUUID } from "crypto";
 import { events } from "@/lib/collections";
 import type { Event } from "@/lib/types";
 
-// TODO: replace with the authenticated organizer id once auth lands.
-const ORGANIZER_ID = "demo-organizer";
-
 export async function POST(req: Request) {
+  const userId = cookies().get("session")?.value;
+  if (!userId) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
   let body: Record<string, unknown>;
   try {
     body = await req.json();
@@ -47,7 +50,7 @@ export async function POST(req: Request) {
     sourceUrl: str(body.sourceUrl),
     imageUrl: str(body.imageUrl),
     tags,
-    organizerId: ORGANIZER_ID,
+    organizerId: userId,
     seatLimit,
     createdAt: new Date(),
   };

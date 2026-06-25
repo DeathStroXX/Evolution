@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { events, registrations } from "@/lib/collections";
+import { getCurrentUser } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -7,9 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-// TODO: replace with the authenticated organizer id once auth lands.
-const ORGANIZER_ID = "demo-organizer";
 
 export const dynamic = "force-dynamic";
 
@@ -25,11 +24,16 @@ function formatDate(d?: Date) {
 }
 
 export default async function DashboardPage() {
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/auth");
+  }
+
   const eventsCol = await events();
   const registrationsCol = await registrations();
 
   const list = await eventsCol
-    .find({ organizerId: ORGANIZER_ID })
+    .find({ organizerId: user._id })
     .sort({ startsAt: -1, createdAt: -1 })
     .toArray();
 
