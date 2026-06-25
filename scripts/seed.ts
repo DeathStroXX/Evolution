@@ -37,20 +37,10 @@ function makeEvent(
 }
 
 // Real, regional events. Dates are in CEST (+02:00) for the summer months.
-// seed-demo.ts already ships "AI Week Mainfranken 2026" and "Startup Night
-// Schweinfurt", so those two are given differentiated titles here to avoid
-// confusing exact duplicates in the catalog.
+// Events that seed-demo.ts already owns (with reward rules + registrations) are
+// intentionally NOT included here — "AI Week Mainfranken 2026", "Startup Night
+// Schweinfurt", and "DevOps Meetup Würzburg" live in seed-demo.ts only.
 const seedData: SeedEvent[] = [
-  makeEvent({
-    title: "AI Week Mainfranken 2026 — Festival",
-    description:
-      "Bavaria's first decentralized AI festival — 42 events across the region exploring how AI is reshaping industry and public life. Over 1,100 attendees last year.",
-    startsAt: new Date("2026-06-22T10:00:00+02:00"),
-    location: "Various venues, Würzburg & Schweinfurt",
-    tags: ["AI", "Community"],
-    coverImage:
-      "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=400&fit=crop",
-  }),
   makeEvent({
     title: "AI Vibe Hackathon #4",
     description:
@@ -92,16 +82,6 @@ const seedData: SeedEvent[] = [
       "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&h=400&fit=crop",
   }),
   makeEvent({
-    title: "DevOps Meetup Würzburg",
-    description:
-      "Monthly meetup for DevOps practitioners in Mainfranken. CI/CD pipelines, infrastructure as code, and cloud-native patterns.",
-    startsAt: new Date("2026-07-08T18:30:00+02:00"),
-    location: "TGZ Würzburg, Friedrich-Bergius-Ring 15",
-    tags: ["IT", "Workshop"],
-    coverImage:
-      "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&h=400&fit=crop",
-  }),
-  makeEvent({
     title: "Würzburg Business Meetup",
     description:
       "Monthly networking for founders, freelancers, and business professionals in Würzburg.",
@@ -130,16 +110,6 @@ const seedData: SeedEvent[] = [
     tags: ["IT", "Networking"],
     coverImage:
       "https://images.unsplash.com/photo-1558008258-3256797b43f3?w=800&h=400&fit=crop",
-  }),
-  makeEvent({
-    title: "Startup Night Schweinfurt 2026",
-    description:
-      "Pitch night for early-stage startups. 5-minute pitches, networking, and drinks.",
-    startsAt: new Date("2026-07-05T19:00:00+02:00"),
-    location: "Kunsthalle Schweinfurt",
-    tags: ["Startup", "Networking"],
-    coverImage:
-      "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800&h=400&fit=crop",
   }),
   makeEvent({
     title: "GEO Strategy Workshop — AI Week",
