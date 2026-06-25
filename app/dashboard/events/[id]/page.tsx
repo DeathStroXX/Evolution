@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -49,9 +50,16 @@ export default async function EventDetailPage({
         >
           ← Back to My Events
         </Link>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {event.title}
-        </h1>
+        <div className="flex items-start justify-between gap-4">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {event.title}
+          </h1>
+          <Button asChild variant="outline" className="shrink-0">
+            <Link href={`/dashboard/events/${event._id}/rewards`}>
+              Reward rules
+            </Link>
+          </Button>
+        </div>
         <p className="text-sm text-muted-foreground">
           {formatDate(event.startsAt)}
           {event.location ? ` · ${event.location}` : ""}
