@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { events, registrations, profiles } from "@/lib/collections";
 import EventsGrid, {
   type SerializedEvent,
@@ -62,10 +63,23 @@ async function getSocialProof(): Promise<Record<string, EventSocial>> {
   return social;
 }
 
+// Which events the logged-in user has already registered for.
+async function getRegisteredEventIds(): Promise<string[]> {
+  const userId = cookies().get("session")?.value;
+  if (!userId) return [];
+
+  const regCol = await registrations();
+  const regs = await regCol
+    .find({ userId }, { projection: { eventId: 1 } })
+    .toArray();
+  return regs.map((r) => r.eventId);
+}
+
 export default async function EventsPage() {
-  const [allEvents, social] = await Promise.all([
+  const [allEvents, social, registeredEventIds] = await Promise.all([
     getEvents(),
     getSocialProof(),
+    getRegisteredEventIds(),
   ]);
 
   return (
@@ -89,7 +103,11 @@ export default async function EventsPage() {
           </p>
         </div>
       ) : (
-        <EventsGrid events={allEvents} social={social} />
+        <EventsGrid
+          events={allEvents}
+          social={social}
+          registeredEventIds={registeredEventIds}
+        />
       )}
     </div>
   );

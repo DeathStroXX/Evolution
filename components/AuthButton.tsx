@@ -17,7 +17,7 @@ export default function AuthButton() {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    async function check() {
       try {
         const res = await fetch("/api/auth/me", { cache: "no-store" });
         if (!cancelled) setUser(res.ok ? await res.json() : null);
@@ -26,9 +26,14 @@ export default function AuthButton() {
       } finally {
         if (!cancelled) setLoading(false);
       }
-    })();
+    }
+    check();
+    // Re-check when the tab regains focus so the nav reflects a fresh login
+    // (e.g. after the auth page redirects back here).
+    window.addEventListener("focus", check);
     return () => {
       cancelled = true;
+      window.removeEventListener("focus", check);
     };
   }, []);
 

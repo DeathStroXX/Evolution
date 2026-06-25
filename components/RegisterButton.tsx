@@ -158,6 +158,10 @@ export default function RegisterButton({
   }
 
   if (status === "anonymous") {
+    // Send the user back to this event after auth — preserving the referral
+    // code so the referrer gets credited when they register.
+    const returnTo = `/events/${eventId}${ref ? `?ref=${ref}` : ""}`;
+    const authHref = `/auth?redirect=${encodeURIComponent(returnTo)}`;
     return (
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
@@ -165,7 +169,7 @@ export default function RegisterButton({
           <span className="font-medium text-foreground">{eventTitle}</span>.
         </p>
         <Button asChild size="lg">
-          <Link href="/auth">Join to Register</Link>
+          <Link href={authHref}>Join to Register</Link>
         </Button>
       </div>
     );

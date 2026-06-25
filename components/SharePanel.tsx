@@ -30,7 +30,9 @@ interface SharePlatform {
   hover: string;
   icon: React.ReactNode;
   /** Build the platform share URL given the prefilled message + referral link. */
-  href: (message: string, link: string) => string;
+  href?: (message: string, link: string) => string;
+  /** Platforms without a share URL (e.g. Discord) copy the message instead. */
+  copy?: boolean;
 }
 
 const WhatsAppIcon = (
@@ -54,6 +56,18 @@ const XIcon = (
 const LinkedInIcon = (
   <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
     <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z" />
+  </svg>
+);
+
+const RedditIcon = (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+    <path d="M12 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 01-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 01.042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 014.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 01.14-.197.35.35 0 01.238-.042l2.906.617a1.214 1.214 0 011.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 00-.231.094.33.33 0 000 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 00.029-.463.33.33 0 00-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 00-.232-.095z" />
+  </svg>
+);
+
+const DiscordIcon = (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+    <path d="M20.317 4.37a19.79 19.79 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.74 19.74 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.3 12.3 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.84 19.84 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
   </svg>
 );
 
@@ -96,19 +110,41 @@ const PLATFORMS: SharePlatform[] = [
         link
       )}`,
   },
+  {
+    key: "reddit",
+    label: "Reddit",
+    hover: "hover:border-orange-600 hover:text-orange-600",
+    icon: RedditIcon,
+    href: (message, link) =>
+      `https://www.reddit.com/submit?url=${encodeURIComponent(
+        link
+      )}&title=${encodeURIComponent(message)}`,
+  },
+  {
+    key: "discord",
+    label: "Discord",
+    hover: "hover:border-indigo-500 hover:text-indigo-500",
+    icon: DiscordIcon,
+    copy: true,
+  },
 ];
 
 export default function SharePanel({
   eventId,
   eventTitle,
+  eventDate,
+  eventLocation,
 }: {
   eventId: string;
   eventTitle: string;
+  eventDate?: string;
+  eventLocation?: string;
 }) {
   const [status, setStatus] = useState<Status>("loading");
   const [code, setCode] = useState<string | null>(null);
   const [origin, setOrigin] = useState("");
   const [copied, setCopied] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") setOrigin(window.location.origin);
@@ -166,7 +202,10 @@ export default function SharePanel({
     return `${base}/events/${eventId}?ref=${code}`;
   }, [origin, eventId, code]);
 
-  const shareMessage = `I'm attending ${eventTitle}! Join me:`;
+  // Richer message for group chats — gracefully omits date/location if absent.
+  const datePart = eventDate ? ` on ${eventDate}` : "";
+  const locationPart = eventLocation ? ` at ${eventLocation}` : "";
+  const shareMessage = `I'm attending ${eventTitle}${datePart}${locationPart}. Would love to see you there! Register here:`;
 
   async function handleCopy() {
     if (!referralLink) return;
@@ -177,6 +216,16 @@ export default function SharePanel({
     } catch {
       // Clipboard unavailable — leave the input for manual copy.
     }
+  }
+
+  async function handleDiscordCopy(trackedLink: string) {
+    try {
+      await navigator.clipboard.writeText(`${shareMessage} ${trackedLink}`);
+      setToast("Message copied! Paste it in Discord");
+    } catch {
+      setToast("Couldn't copy — copy your link below instead");
+    }
+    setTimeout(() => setToast(null), 3000);
   }
 
   function awardSharePoints(platform: string) {
@@ -227,31 +276,65 @@ export default function SharePanel({
         {status === "ready" && (
           <div className="flex flex-col gap-6">
             {/* Primary action: share to a platform */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {PLATFORMS.map((p) => {
                 const trackedLink = `${referralLink}&platform=${p.key}`;
+                const className = cn(
+                  "flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3 text-left text-sm font-semibold text-foreground shadow-sm transition-colors hover:bg-secondary",
+                  p.hover
+                );
+                const inner = (
+                  <>
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground/70">
+                      {p.icon}
+                    </span>
+                    {p.label}
+                  </>
+                );
+
+                if (p.copy) {
+                  return (
+                    <button
+                      key={p.key}
+                      type="button"
+                      onClick={() => {
+                        awardSharePoints(p.key);
+                        void handleDiscordCopy(trackedLink);
+                      }}
+                      aria-label={`Copy message for ${p.label}`}
+                      title={`Copy message for ${p.label}`}
+                      className={className}
+                    >
+                      {inner}
+                    </button>
+                  );
+                }
+
                 return (
                   <a
                     key={p.key}
-                    href={p.href(shareMessage, trackedLink)}
+                    href={p.href!(shareMessage, trackedLink)}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => awardSharePoints(p.key)}
                     aria-label={`Share on ${p.label}`}
                     title={`Share on ${p.label}`}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground shadow-sm transition-colors hover:bg-secondary",
-                      p.hover
-                    )}
+                    className={className}
                   >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground/70">
-                      {p.icon}
-                    </span>
-                    Share on {p.label}
+                    {inner}
                   </a>
                 );
               })}
             </div>
+
+            {toast && (
+              <p
+                role="status"
+                className="rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-medium text-foreground"
+              >
+                {toast}
+              </p>
+            )}
 
             {/* Secondary action: copy the raw link */}
             <div className="flex flex-col gap-2 border-t border-border pt-4">

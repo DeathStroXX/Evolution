@@ -17,6 +17,21 @@ const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
   minute: "2-digit",
 });
 
+// Concise variant for the share message (e.g. "Mon, Jan 5, 6:00 PM").
+const shareDateFormatter = new Intl.DateTimeFormat("en-US", {
+  weekday: "short",
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
+
+function formatShareDate(value?: Date) {
+  if (!value) return undefined;
+  const d = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(d.getTime()) ? undefined : shareDateFormatter.format(d);
+}
+
 function formatDateTime(value?: Date) {
   if (!value) return "Date & time to be announced";
   const d = value instanceof Date ? value : new Date(value);
@@ -124,7 +139,7 @@ export default async function EventDetailPage({
 
         <Link
           href={`/events/${event._id}/leaderboard`}
-          className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3.5 py-1.5 text-sm font-medium text-foreground/80 transition-colors hover:border-primary hover:text-foreground"
+          className="mt-4 inline-flex items-center gap-2 rounded-full border-2 border-primary bg-primary/10 px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-primary/20"
         >
           🏆 View referral leaderboard
         </Link>
@@ -205,7 +220,12 @@ export default async function EventDetailPage({
 
       {/* Referral sharing */}
       <section className="mt-6">
-        <SharePanel eventId={event._id} eventTitle={event.title} />
+        <SharePanel
+          eventId={event._id}
+          eventTitle={event.title}
+          eventDate={formatShareDate(event.startsAt)}
+          eventLocation={event.location}
+        />
       </section>
 
       {/* Who's going */}

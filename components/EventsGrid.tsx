@@ -102,11 +102,18 @@ function CalendarPlaceholder() {
 export default function EventsGrid({
   events,
   social = {},
+  registeredEventIds = [],
 }: {
   events: SerializedEvent[];
   social?: Record<string, EventSocial>;
+  registeredEventIds?: string[];
 }) {
   const [active, setActive] = useState<string>("All");
+
+  const registeredSet = useMemo(
+    () => new Set(registeredEventIds),
+    [registeredEventIds]
+  );
 
   const filtered = useMemo(() => {
     if (active === "All") return events;
@@ -148,13 +155,19 @@ export default function EventsGrid({
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((event) => {
             const proof = social[event._id];
+            const isRegistered = registeredSet.has(event._id);
             return (
             <Link
               key={event._id}
               href={`/events/${event._id}`}
               className="group block focus:outline-none"
             >
-              <Card className="flex h-full flex-col overflow-hidden border-border transition-all duration-200 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-md group-focus-visible:ring-2 group-focus-visible:ring-ring">
+              <Card className="relative flex h-full flex-col overflow-hidden border-border transition-all duration-200 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-md group-focus-visible:ring-2 group-focus-visible:ring-ring">
+                {isRegistered && (
+                  <span className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground shadow">
+                    Registered ✓
+                  </span>
+                )}
                 {/* Cover image / placeholder */}
                 {event.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
