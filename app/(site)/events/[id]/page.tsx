@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { events, registrations } from "@/lib/collections";
 import { Badge } from "@/components/ui/badge";
@@ -70,6 +71,13 @@ export default async function EventDetailPage({
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           {event.title}
         </h1>
+
+        <Link
+          href={`/events/${event._id}/leaderboard`}
+          className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+        >
+          🏆 View referral leaderboard
+        </Link>
 
         <dl className="mt-6 grid gap-4 sm:grid-cols-2">
           <div className="flex items-start gap-3">
