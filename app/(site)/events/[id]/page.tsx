@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { events, registrations } from "@/lib/collections";
 import { Badge } from "@/components/ui/badge";
 import RegisterButton from "@/components/RegisterButton";
+import SharePanel from "@/components/SharePanel";
 
 // Event + registration data is read from MongoDB at request time.
 export const dynamic = "force-dynamic";
@@ -142,6 +143,11 @@ export default async function EventDetailPage({
       {/* Registration */}
       <section className="mt-10 rounded-2xl border border-border bg-secondary/40 p-6 sm:p-8">
         <RegisterButton eventId={event._id} eventTitle={event.title} />
+      </section>
+
+      {/* Referral sharing */}
+      <section className="mt-6">
+        <SharePanel eventId={event._id} />
       </section>
 
       {/* Who's going */}
