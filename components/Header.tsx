@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import AuthButton from "@/components/AuthButton";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -36,8 +37,7 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
-          {/* AuthButton mounts here later */}
-          <div id="auth-slot" />
+          <AuthButton />
         </nav>
 
         {/* Mobile controls */}
