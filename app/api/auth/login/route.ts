@@ -22,5 +22,14 @@ export async function POST(request: Request) {
   }
 
   const profile = await loginOrCreate(email, name);
-  return NextResponse.json(profile);
+
+  const response = NextResponse.json(profile);
+  response.cookies.set("session", profile._id, {
+    httpOnly: true,
+    path: "/",
+    maxAge: 604800,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+  });
+  return response;
 }

@@ -4,7 +4,6 @@ import { profiles } from "@/lib/collections";
 import type { Profile } from "@/lib/types";
 
 const SESSION_COOKIE = "session";
-const SESSION_MAX_AGE = 604800; // 7 days
 
 /** Deterministic 24-char id derived from the email. */
 function idForEmail(email: string): string {
@@ -15,8 +14,9 @@ function idForEmail(email: string): string {
 }
 
 /**
- * Upsert a profile for the given email and start a session.
- * Returns the (possibly newly created) profile.
+ * Upsert a profile for the given email.
+ * Returns the (possibly newly created) profile. The caller is responsible
+ * for setting the session cookie on the response.
  */
 export async function loginOrCreate(
   email: string,
@@ -39,16 +39,6 @@ export async function loginOrCreate(
     // Should never happen right after an upsert.
     throw new Error("Failed to load profile after login");
   }
-
-  cookies().set({
-    name: SESSION_COOKIE,
-    value: _id,
-    httpOnly: true,
-    path: "/",
-    maxAge: SESSION_MAX_AGE,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-  });
 
   return profile as Profile;
 }
