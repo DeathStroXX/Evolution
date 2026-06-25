@@ -59,6 +59,12 @@ export default function AuthButton() {
       <span className="max-w-[10rem] truncate text-sm font-medium text-foreground">
         {user.name || user.email || "Member"}
       </span>
+      <Link
+        href="/me"
+        className="text-sm font-medium text-foreground/70 transition-colors hover:text-foreground"
+      >
+        My Points
+      </Link>
       <Button
         variant="outline"
         size="sm"

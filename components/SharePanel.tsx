@@ -15,8 +15,6 @@ import { cn } from "@/lib/utils";
 
 type Status = "loading" | "anonymous" | "ready" | "error";
 
-const SHARE_MESSAGE = "Check out this event!";
-
 function extractUserId(data: unknown): string | null {
   if (!data || typeof data !== "object") return null;
   const d = data as Record<string, unknown>;
@@ -100,7 +98,13 @@ const PLATFORMS: SharePlatform[] = [
   },
 ];
 
-export default function SharePanel({ eventId }: { eventId: string }) {
+export default function SharePanel({
+  eventId,
+  eventTitle,
+}: {
+  eventId: string;
+  eventTitle: string;
+}) {
   const [status, setStatus] = useState<Status>("loading");
   const [code, setCode] = useState<string | null>(null);
   const [origin, setOrigin] = useState("");
@@ -162,6 +166,8 @@ export default function SharePanel({ eventId }: { eventId: string }) {
     return `${base}/events/${eventId}?ref=${code}`;
   }, [origin, eventId, code]);
 
+  const shareMessage = `I'm attending ${eventTitle}! Join me:`;
+
   async function handleCopy() {
     if (!referralLink) return;
     try {
@@ -219,51 +225,63 @@ export default function SharePanel({ eventId }: { eventId: string }) {
         )}
 
         {status === "ready" && (
-          <div className="flex flex-col gap-4">
-            {/* Copyable link */}
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <input
-                readOnly
-                value={referralLink}
-                onFocus={(e) => e.currentTarget.select()}
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                aria-label="Your referral link"
-              />
-              <Button onClick={handleCopy} className="shrink-0">
-                {copied ? (
-                  <>
-                    <Check className="size-4" /> Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="size-4" /> Copy link
-                  </>
-                )}
-              </Button>
-            </div>
-
-            {/* Share buttons */}
-            <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col gap-6">
+            {/* Primary action: share to a platform */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {PLATFORMS.map((p) => {
                 const trackedLink = `${referralLink}&platform=${p.key}`;
                 return (
                   <a
                     key={p.key}
-                    href={p.href(SHARE_MESSAGE, trackedLink)}
+                    href={p.href(shareMessage, trackedLink)}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => awardSharePoints(p.key)}
                     aria-label={`Share on ${p.label}`}
                     title={`Share on ${p.label}`}
                     className={cn(
-                      "flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors",
+                      "flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground shadow-sm transition-colors hover:bg-secondary",
                       p.hover
                     )}
                   >
-                    {p.icon}
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground/70">
+                      {p.icon}
+                    </span>
+                    Share on {p.label}
                   </a>
                 );
               })}
+            </div>
+
+            {/* Secondary action: copy the raw link */}
+            <div className="flex flex-col gap-2 border-t border-border pt-4">
+              <p className="text-sm font-medium text-foreground/70">
+                Or copy your link
+              </p>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <input
+                  readOnly
+                  value={referralLink}
+                  onFocus={(e) => e.currentTarget.select()}
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  aria-label="Your referral link"
+                />
+                <Button
+                  variant="outline"
+                  onClick={handleCopy}
+                  className="shrink-0"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="size-4" /> Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="size-4" /> Copy link
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         )}

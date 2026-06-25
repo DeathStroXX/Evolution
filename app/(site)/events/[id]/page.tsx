@@ -170,7 +170,7 @@ export default async function EventDetailPage({
 
       {/* Referral sharing */}
       <section className="mt-6">
-        <SharePanel eventId={event._id} />
+        <SharePanel eventId={event._id} eventTitle={event.title} />
       </section>
 
       {/* Who's going */}
