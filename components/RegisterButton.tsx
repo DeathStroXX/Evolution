@@ -174,22 +174,26 @@ export default function RegisterButton({
   if (status === "registered") {
     return (
       <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-center sm:gap-6 sm:text-left">
-        <div className="flex items-center gap-2 text-primary">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M20 6 9 17l-5-5" />
-          </svg>
-          <span className="text-lg font-semibold">You&rsquo;re registered</span>
+        <div className="flex items-center gap-2.5">
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          </span>
+          <span className="text-lg font-semibold text-foreground">
+            You&rsquo;re registered
+          </span>
         </div>
         {qrDataUrl && (
           <div className="flex flex-col items-center gap-2">

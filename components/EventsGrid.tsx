@@ -31,6 +31,31 @@ function formatDate(iso?: string) {
   return dateFormatter.format(d);
 }
 
+function CalendarPlaceholder() {
+  return (
+    <div className="flex aspect-[16/9] w-full items-center justify-center border-b border-border bg-muted">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="40"
+        height="40"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="text-muted-foreground/50"
+        aria-hidden="true"
+      >
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+      </svg>
+    </div>
+  );
+}
+
 export default function EventsGrid({ events }: { events: SerializedEvent[] }) {
   const [active, setActive] = useState<string>("All");
 
@@ -57,7 +82,7 @@ export default function EventsGrid({ events }: { events: SerializedEvent[] }) {
                 "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
                 isActive
                   ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-background text-foreground/70 hover:border-primary/40 hover:text-primary"
+                  : "border-border bg-white text-foreground/70 hover:border-primary hover:text-foreground"
               )}
             >
               {filter}
@@ -78,32 +103,43 @@ export default function EventsGrid({ events }: { events: SerializedEvent[] }) {
               href={`/events/${event._id}`}
               className="group block focus:outline-none"
             >
-              <Card className="h-full overflow-hidden transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-lg group-focus-visible:ring-2 group-focus-visible:ring-ring">
+              <Card className="h-full overflow-hidden border-border transition-all duration-200 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-md group-focus-visible:ring-2 group-focus-visible:ring-ring">
                 {/* Cover image / placeholder */}
                 {event.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={event.imageUrl}
                     alt={event.title}
-                    className="aspect-[16/9] w-full object-cover"
+                    className="aspect-[16/9] w-full border-b border-border object-cover"
                   />
                 ) : (
-                  <div className="flex aspect-[16/9] w-full items-center justify-center bg-gradient-to-br from-primary to-emerald-700">
-                    <span className="px-4 text-center text-lg font-semibold text-primary-foreground">
-                      {event.title}
-                    </span>
-                  </div>
+                  <CalendarPlaceholder />
                 )}
 
                 <CardHeader className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {formatDate(event.startsAt)}
                   </p>
-                  <CardTitle className="line-clamp-2 text-lg leading-snug">
+                  <CardTitle className="line-clamp-2 text-lg font-bold leading-snug transition-colors group-hover:text-foreground">
                     {event.title}
                   </CardTitle>
                   {event.location && (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
                       {event.location}
                     </p>
                   )}

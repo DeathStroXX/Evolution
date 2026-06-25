@@ -52,10 +52,25 @@ export default async function EventDetailPage({
           className="aspect-[16/9] w-full rounded-2xl object-cover"
         />
       ) : (
-        <div className="flex aspect-[16/9] w-full items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-emerald-700">
-          <span className="px-6 text-center text-2xl font-bold text-primary-foreground">
-            {event.title}
-          </span>
+        <div className="flex aspect-[16/9] w-full items-center justify-center rounded-2xl border border-border bg-muted">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="56"
+            height="56"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-muted-foreground/40"
+            aria-hidden="true"
+          >
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
         </div>
       )}
 
@@ -74,7 +89,7 @@ export default async function EventDetailPage({
 
         <Link
           href={`/events/${event._id}/leaderboard`}
-          className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+          className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3.5 py-1.5 text-sm font-medium text-foreground/80 transition-colors hover:border-primary hover:text-foreground"
         >
           🏆 View referral leaderboard
         </Link>
@@ -83,7 +98,7 @@ export default async function EventDetailPage({
           <div className="flex items-start gap-3">
             <span
               aria-hidden="true"
-              className="mt-0.5 text-primary"
+              className="mt-0.5 text-foreground/50"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -114,7 +129,7 @@ export default async function EventDetailPage({
 
           {event.location && (
             <div className="flex items-start gap-3">
-              <span aria-hidden="true" className="mt-0.5 text-primary">
+              <span aria-hidden="true" className="mt-0.5 text-foreground/50">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="20"

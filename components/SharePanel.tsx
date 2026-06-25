@@ -183,9 +183,12 @@ export default function SharePanel({ eventId }: { eventId: string }) {
   }
 
   return (
-    <Card className="border-green-600/30 bg-green-50/40">
+    <Card className="border-primary/30 bg-primary/5">
       <CardHeader>
-        <CardTitle className="text-green-800">Share &amp; earn points</CardTitle>
+        <CardTitle className="flex items-center gap-2 text-foreground">
+          <span className="inline-block h-5 w-1.5 rounded-full bg-primary" />
+          Share &amp; earn points
+        </CardTitle>
         <CardDescription>
           Invite friends with your personal link. You earn points when they
           register and check in.
@@ -226,10 +229,7 @@ export default function SharePanel({ eventId }: { eventId: string }) {
                 className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 aria-label="Your referral link"
               />
-              <Button
-                onClick={handleCopy}
-                className="shrink-0 bg-green-600 text-white hover:bg-green-700"
-              >
+              <Button onClick={handleCopy} className="shrink-0">
                 {copied ? (
                   <>
                     <Check className="size-4" /> Copied!

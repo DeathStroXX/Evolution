@@ -50,7 +50,10 @@ function AuthForm() {
 
   return (
     <Card className="w-full max-w-md">
-      <CardHeader className="text-center">
+      <CardHeader className="items-center text-center">
+        <span className="mb-2 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-base font-black text-primary-foreground">
+          IT
+        </span>
         <CardTitle className="text-2xl">Join the community</CardTitle>
         <CardDescription>
           Enter your details to register for events and track your rewards.

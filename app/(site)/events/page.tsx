@@ -31,12 +31,13 @@ export default async function EventsPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
       <header className="mb-10 max-w-2xl">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          Community Events
+        <span className="inline-block h-1.5 w-12 rounded-full bg-primary" />
+        <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
+          IT-Events in der Region
         </h1>
         <p className="mt-3 text-muted-foreground">
           Discover meetups, workshops, and gatherings across the Mainfranken
-          community.
+          tech community. We look forward to seeing you there.
         </p>
       </header>
 
