@@ -70,7 +70,7 @@ export default async function DashboardPage() {
             Manage the events you organize and track turnout.
           </p>
         </div>
-        <Button asChild className="bg-green-600 hover:bg-green-700">
+        <Button asChild>
           <Link href="/dashboard/events/new">Create Event</Link>
         </Button>
       </div>
@@ -91,7 +91,7 @@ export default async function DashboardPage() {
               You haven&apos;t created any events yet.{" "}
               <Link
                 href="/dashboard/events/new"
-                className="font-medium text-green-700 hover:underline"
+                className="font-medium text-foreground underline-offset-2 hover:underline"
               >
                 Create your first event
               </Link>
@@ -123,7 +123,7 @@ export default async function DashboardPage() {
                         <td className="px-6 py-4">
                           <Link
                             href={`/dashboard/events/${event._id}`}
-                            className="font-medium text-foreground hover:text-green-700 hover:underline"
+                            className="font-medium text-foreground underline-offset-2 hover:underline"
                           >
                             {event.title}
                           </Link>
@@ -154,10 +154,11 @@ function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <Card>
       <CardContent className="p-6">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+        <span className="inline-block h-1.5 w-8 rounded-full bg-primary" />
+        <p className="mt-3 text-xs uppercase tracking-wide text-muted-foreground">
           {label}
         </p>
-        <p className="mt-2 text-3xl font-semibold tabular-nums">{value}</p>
+        <p className="mt-1 text-3xl font-semibold tabular-nums">{value}</p>
       </CardContent>
     </Card>
   );

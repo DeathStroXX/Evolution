@@ -152,7 +152,7 @@ export default function CheckinPage() {
 
         {status === "processing" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-neutral-950/80">
-            <Loader2 className="h-10 w-10 animate-spin text-green-400" />
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
             <p className="text-sm text-white/80">Checking in…</p>
           </div>
         )}
@@ -162,13 +162,13 @@ export default function CheckinPage() {
             {result.ok ? (
               <>
                 <CheckCircle2
-                  className="h-28 w-28 text-green-500"
+                  className="h-28 w-28 text-primary"
                   style={{
                     animation: "checkin-pop 0.4s ease-out",
                   }}
                 />
                 <div className="space-y-1">
-                  <p className="text-2xl font-semibold text-green-400">
+                  <p className="text-2xl font-semibold text-primary">
                     Checked in!
                   </p>
                   <p className="text-lg text-white/90">
@@ -193,11 +193,7 @@ export default function CheckinPage() {
               </>
             )}
 
-            <Button
-              onClick={scanNext}
-              size="lg"
-              className="mt-2 bg-green-600 hover:bg-green-700"
-            >
+            <Button onClick={scanNext} size="lg" className="mt-2">
               Scan Next
             </Button>
           </div>

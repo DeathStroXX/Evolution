@@ -170,9 +170,9 @@ export default function EventForm({
   return (
     <div className="space-y-6">
       {showAiExtract && (
-        <Card className="border-green-200 bg-green-50/50">
+        <Card className="border-primary/30 bg-primary/5">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base text-green-800">
+            <CardTitle className="flex items-center gap-2 text-base text-foreground">
               <Sparkles className="h-4 w-4" />
               AI Extract
             </CardTitle>
@@ -193,7 +193,7 @@ export default function EventForm({
                 type="button"
                 onClick={handleExtract}
                 disabled={extracting || !extractUrl.trim()}
-                className="bg-green-600 shrink-0 hover:bg-green-700"
+                className="shrink-0"
               >
                 {extracting ? (
                   <>
@@ -303,11 +303,7 @@ export default function EventForm({
             )}
 
             <div className="flex justify-end">
-              <Button
-                type="submit"
-                disabled={submitting}
-                className="bg-green-600 hover:bg-green-700"
-              >
+              <Button type="submit" disabled={submitting}>
                 {submitting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />

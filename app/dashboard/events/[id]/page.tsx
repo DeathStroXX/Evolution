@@ -253,10 +253,11 @@ function StatCard({
   return (
     <Card>
       <CardContent className="p-6">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+        <span className="inline-block h-1.5 w-8 rounded-full bg-primary" />
+        <p className="mt-3 text-xs uppercase tracking-wide text-muted-foreground">
           {label}
         </p>
-        <p className="mt-2 text-3xl font-semibold tabular-nums">{value}</p>
+        <p className="mt-1 text-3xl font-semibold tabular-nums">{value}</p>
       </CardContent>
     </Card>
   );

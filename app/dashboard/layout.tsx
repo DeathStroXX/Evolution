@@ -21,9 +21,11 @@ export default function DashboardLayout({
   return (
     <div className="flex min-h-screen bg-white text-foreground">
       <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-white">
-        <div className="flex h-16 items-center gap-2 border-b border-border px-6">
-          <span className="h-6 w-6 rounded-md bg-green-600" />
-          <span className="text-sm font-semibold tracking-tight">
+        <div className="flex h-[4.5rem] items-center gap-2.5 bg-neutral-900 px-6">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-primary text-sm font-black text-primary-foreground">
+            IT
+          </span>
+          <span className="text-sm font-semibold tracking-tight text-white">
             Organizer
           </span>
         </div>
@@ -37,10 +39,10 @@ export default function DashboardLayout({
                 key={href}
                 href={href}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  "flex items-center gap-3 rounded-md border-l-2 px-3 py-2 text-sm font-medium transition-colors",
                   active
-                    ? "bg-green-50 text-green-700"
-                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    ? "border-primary bg-primary/15 font-semibold text-foreground"
+                    : "border-transparent text-muted-foreground hover:bg-secondary hover:text-foreground"
                 )}
               >
                 <Icon className="h-4 w-4" />

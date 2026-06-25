@@ -109,13 +109,13 @@ export default function RewardRulesPage() {
       </div>
 
       {current && (
-        <Card className="border-green-200 bg-green-50/50">
+        <Card className="border-primary/30 bg-primary/5">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base text-green-800">
+            <CardTitle className="flex items-center gap-2 text-base text-foreground">
               <Trophy className="h-4 w-4" />
               Current reward
             </CardTitle>
-            <CardDescription className="text-green-800/80">
+            <CardDescription>
               Unlocks <span className="font-medium">{current.rewardLabel}</span>{" "}
               after {current.threshold}{" "}
               {current.mode === "checkin" ? "check-ins" : "sign-ups"}.
@@ -202,17 +202,13 @@ export default function RewardRulesPage() {
 
               {error && <p className="text-sm text-destructive">{error}</p>}
               {saved && (
-                <p className="text-sm font-medium text-green-700">
+                <p className="text-sm font-medium text-foreground">
                   Reward rule saved.
                 </p>
               )}
 
               <div className="flex justify-end">
-                <Button
-                  type="submit"
-                  disabled={saving}
-                  className="bg-green-600 hover:bg-green-700"
-                >
+                <Button type="submit" disabled={saving}>
                   {saving ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
