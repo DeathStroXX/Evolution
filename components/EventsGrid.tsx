@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +71,43 @@ function Avatar({ name }: { name: string }) {
     >
       {initial(name)}
     </span>
+  );
+}
+
+interface RewardRuleLite {
+  threshold: number;
+  rewardLabel: string;
+}
+
+// Fetches the event's reward rule (if any) and renders a small banner at the
+// bottom of the card. Renders nothing when the event has no reward.
+function RewardBanner({ eventId }: { eventId: string }) {
+  const [rule, setRule] = useState<RewardRuleLite | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/reward-rules?eventId=${encodeURIComponent(eventId)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled || !data || typeof data.rewardLabel !== "string") return;
+        setRule({ threshold: data.threshold, rewardLabel: data.rewardLabel });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [eventId]);
+
+  if (!rule) return null;
+
+  return (
+    <div className="mt-auto flex items-center gap-2 border-t border-border bg-primary/10 px-6 py-3 text-sm font-semibold text-foreground">
+      <span aria-hidden="true">🎁</span>
+      <span className="line-clamp-1">
+        {rule.rewardLabel} for {rule.threshold} referral
+        {rule.threshold === 1 ? "" : "s"}
+      </span>
+    </div>
   );
 }
 
@@ -148,9 +185,26 @@ export default function EventsGrid({
       </div>
 
       {filtered.length === 0 ? (
-        <p className="py-16 text-center text-muted-foreground">
-          No events match this filter.
-        </p>
+        <div className="rounded-xl border border-dashed border-border py-16 text-center">
+          <p className="text-2xl" aria-hidden="true">
+            🔍
+          </p>
+          <p className="mt-3 text-lg font-semibold">
+            No events match your filters
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Try a different category to see more events.
+          </p>
+          {active !== "All" && (
+            <button
+              type="button"
+              onClick={() => setActive("All")}
+              className="mt-5 inline-flex items-center rounded-full border border-primary bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((event) => {
@@ -232,6 +286,9 @@ export default function EventsGrid({
                     </span>
                   </div>
                 )}
+
+                {/* Reward banner — surfaces the event's referral reward */}
+                <RewardBanner eventId={event._id} />
               </Card>
             </Link>
             );

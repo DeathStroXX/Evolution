@@ -1,5 +1,17 @@
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import {
+  Award,
+  Crown,
+  Gem,
+  Medal,
+  Megaphone,
+  Share2,
+  Trophy,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import {
   pointsLedger,
   events,
@@ -8,13 +20,25 @@ import {
 } from "@/lib/collections";
 import type { Event, RewardRule, PointsEntry } from "@/lib/types";
 import {
+  summarize,
+  computeTier,
+  computeBadges,
+  type BadgeDef,
+  type TierProgress,
+} from "@/lib/points";
+import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import ReferralImpact from "@/components/ReferralImpact";
+import MeCelebration from "@/components/MeCelebration";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +54,22 @@ interface EventBreakdown {
   byReason: Record<PointsEntry["reason"], number>;
 }
 
+// Tier visuals, indexed to match lib/points TIERS order.
+const TIER_ICONS: LucideIcon[] = [Medal, Award, Trophy, Gem];
+const TIER_BADGE_CLASS = [
+  "bg-amber-700/15 text-amber-700",
+  "bg-slate-400/20 text-slate-500",
+  "bg-yellow-500/20 text-yellow-600",
+  "bg-cyan-400/20 text-cyan-500",
+];
+
+const BADGE_ICONS: Record<string, LucideIcon> = {
+  "first-share": Share2,
+  connector: Users,
+  "crowd-puller": Megaphone,
+  "community-champion": Crown,
+};
+
 export default async function MePage() {
   const userId = cookies().get("session")?.value;
   if (!userId) {
@@ -41,19 +81,9 @@ export default async function MePage() {
     .find({ userId })
     .toArray()) as PointsEntry[];
 
-  // ---- Aggregate the ledger -------------------------------------------------
-  let totalPoints = 0;
-  const byReason: Record<PointsEntry["reason"], number> = {
-    share: 0,
-    signup: 0,
-    checkin: 0,
-  };
+  // ---- Per-event breakdown (for the reward-progress cards) -------------------
   const byEvent = new Map<string, EventBreakdown>();
-
   for (const e of entries) {
-    totalPoints += e.points;
-    byReason[e.reason] = (byReason[e.reason] ?? 0) + e.points;
-
     let bucket = byEvent.get(e.eventId);
     if (!bucket) {
       bucket = {
@@ -69,7 +99,7 @@ export default async function MePage() {
 
   const eventIds = Array.from(byEvent.keys());
 
-  // ---- Look up related event titles, reward rules, referral count -----------
+  // ---- Look up event titles, reward rules, referral count -------------------
   const [eventDocs, ruleDocs, referralCount] = await Promise.all([
     eventIds.length
       ? ((await events()).find({ _id: { $in: eventIds } }).toArray() as Promise<
@@ -84,6 +114,11 @@ export default async function MePage() {
     (await referrals()).countDocuments({ referrerId: userId }),
   ]);
 
+  // ---- Gamified summary (shared logic with /api/points) ---------------------
+  const summary = summarize(entries, referralCount);
+  const tier = computeTier(summary.totalPoints);
+  const badges = computeBadges(summary);
+
   const eventTitles = new Map(eventDocs.map((e) => [e._id, e.title]));
   const rulesByEvent = new Map(ruleDocs.map((r) => [r._id, r]));
 
@@ -93,49 +128,40 @@ export default async function MePage() {
 
   return (
     <div className="flex flex-col gap-8">
+      <MeCelebration tier={tier.tier} tierIndex={tier.tierIndex} />
+
       <header>
         <h1 className="text-3xl font-bold tracking-tight">Your points</h1>
         <p className="mt-1 text-muted-foreground">
-          Track the points you&rsquo;ve earned and the rewards you&rsquo;ve
-          unlocked.
+          Level up by sharing events and bringing the community together.
         </p>
       </header>
 
-      {/* Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Summary</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-            <SummaryStat label="Total points" value={totalPoints} accent />
-            <SummaryStat label="Events participated" value={eventIds.length} />
-            <SummaryStat label="Referrals made" value={referralCount} />
-          </div>
+      <TierCard points={summary.totalPoints} tier={tier} />
 
-          {totalPoints > 0 && (
-            <div className="mt-6 flex flex-wrap gap-x-6 gap-y-1 text-sm text-muted-foreground">
-              {(Object.keys(byReason) as PointsEntry["reason"][])
-                .filter((reason) => byReason[reason] > 0)
-                .map((reason) => (
-                  <span key={reason}>
-                    {REASON_LABELS[reason]}:{" "}
-                    <span className="font-medium text-foreground">
-                      {byReason[reason]} pts
-                    </span>
-                  </span>
-                ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <BadgesSection badges={badges} />
 
-      {/* Per-event breakdown */}
+      <ReferralImpact />
+
+      {/* Per-event reward progress */}
       {eventBreakdowns.length === 0 ? (
         <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            You haven&rsquo;t earned any points yet. Share an event to get
-            started!
+          <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
+            <span className="text-3xl" aria-hidden="true">
+              🚀
+            </span>
+            <div className="space-y-1">
+              <p className="text-base font-semibold">
+                Start earning points by sharing events!
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Invite friends to events and earn points when they sign up and
+                check in.
+              </p>
+            </div>
+            <Button asChild>
+              <Link href="/events">Browse events</Link>
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -159,28 +185,114 @@ export default async function MePage() {
   );
 }
 
-function SummaryStat({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: number;
-  accent?: boolean;
-}) {
+function TierCard({ points, tier }: { points: number; tier: TierProgress }) {
+  const Icon = TIER_ICONS[tier.tierIndex] ?? Medal;
   return (
-    <div className="flex flex-col gap-1">
-      <span
-        className={
-          accent
-            ? "text-3xl font-bold text-primary"
-            : "text-3xl font-bold"
-        }
-      >
-        {value}
-      </span>
-      <span className="text-sm text-muted-foreground">{label}</span>
-    </div>
+    <Card>
+      <CardContent className="flex flex-col gap-5 pt-6">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span
+              className={cn(
+                "flex h-12 w-12 items-center justify-center rounded-full",
+                TIER_BADGE_CLASS[tier.tierIndex]
+              )}
+            >
+              <Icon className="h-6 w-6" />
+            </span>
+            <div>
+              <p className="text-sm text-muted-foreground">Current tier</p>
+              <p className="text-2xl font-bold">{tier.tier}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-3xl font-bold text-primary">{points}</p>
+            <p className="text-sm text-muted-foreground">total points</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Progress value={tier.progressPct} />
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-semibold">{tier.tier}</span>
+            {tier.nextTier ? (
+              <span className="text-muted-foreground">
+                <span className="font-semibold text-foreground">
+                  {tier.pointsToNext}
+                </span>{" "}
+                points to {tier.nextTier}
+              </span>
+            ) : (
+              <span className="font-semibold text-primary">
+                Top tier reached 🎉
+              </span>
+            )}
+            <span className="font-semibold text-muted-foreground">
+              {tier.nextTier ?? "Diamond"}
+            </span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function BadgesSection({ badges }: { badges: BadgeDef[] }) {
+  const earnedCount = badges.filter((b) => b.earned).length;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Achievements</CardTitle>
+        <CardDescription>
+          {earnedCount} of {badges.length} badges unlocked.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {badges.map((b) => {
+            const Icon = BADGE_ICONS[b.key] ?? Award;
+            return (
+              <div
+                key={b.key}
+                className={cn(
+                  "flex flex-col items-center gap-2 rounded-lg border p-4 text-center transition-colors",
+                  b.earned
+                    ? "border-primary/40 bg-primary/5"
+                    : "border-border bg-muted/30 opacity-60 grayscale"
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex h-12 w-12 items-center justify-center rounded-full",
+                    b.earned
+                      ? "bg-primary/20 text-foreground"
+                      : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  <Icon className="h-6 w-6" />
+                </span>
+                <span className="text-sm font-semibold">{b.label}</span>
+                <span className="text-xs text-muted-foreground">
+                  {b.description}
+                </span>
+                {b.earned ? (
+                  <Badge variant="solid" className="mt-1 text-[10px]">
+                    Earned
+                  </Badge>
+                ) : (
+                  b.progress && (
+                    <span className="mt-1 text-[11px] font-medium text-muted-foreground">
+                      {Math.min(b.progress.current, b.progress.target)}/
+                      {b.progress.target}
+                    </span>
+                  )
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

@@ -4,6 +4,7 @@ import EventsGrid, {
   type SerializedEvent,
   type EventSocial,
 } from "@/components/EventsGrid";
+import ActivityTicker from "@/components/ActivityTicker";
 
 // Events come from MongoDB at request time — never statically prerender.
 export const dynamic = "force-dynamic";
@@ -94,6 +95,8 @@ export default async function EventsPage() {
           tech community. We look forward to seeing you there.
         </p>
       </header>
+
+      <ActivityTicker />
 
       {allEvents.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border py-20 text-center">

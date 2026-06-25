@@ -1,9 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { events, registrations, profiles } from "@/lib/collections";
+import { Gift } from "lucide-react";
+import {
+  events,
+  registrations,
+  profiles,
+  rewardRules,
+} from "@/lib/collections";
 import { Badge } from "@/components/ui/badge";
 import RegisterButton from "@/components/RegisterButton";
 import SharePanel from "@/components/SharePanel";
+import ReferralBanner from "@/components/ReferralBanner";
+import EventLeaderboardPublic from "@/components/EventLeaderboardPublic";
 
 // Event + registration data is read from MongoDB at request time.
 export const dynamic = "force-dynamic";
@@ -71,6 +79,18 @@ export default async function EventDetailPage({
     notFound();
   }
 
+  // Reward rule for this event (if the organizer set one). Serialized down to
+  // a plain object so it can cross into the client components below.
+  const rewardRulesCol = await rewardRules();
+  const rewardDoc = await rewardRulesCol.findOne({ _id: params.id });
+  const reward = rewardDoc
+    ? {
+        mode: rewardDoc.mode,
+        threshold: rewardDoc.threshold,
+        rewardLabel: rewardDoc.rewardLabel,
+      }
+    : null;
+
   const registrationsCol = await registrations();
   const regs = await registrationsCol
     .find({ eventId: params.id }, { projection: { userId: 1 } })
@@ -93,6 +113,9 @@ export default async function EventDetailPage({
 
   return (
     <article className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+      {/* "[Name] invited you" — shown only when arriving via a ?ref= link */}
+      <ReferralBanner />
+
       {/* Cover */}
       {event.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -213,18 +236,50 @@ export default async function EventDetailPage({
         </div>
       )}
 
+      {/* Public top referrers — hidden until the event has referrals */}
+      <EventLeaderboardPublic eventId={event._id} />
+
+      {/* Reward callout — prominent, lime-accented, above the register CTA */}
+      {reward && (
+        <section className="mt-10 flex items-start gap-4 rounded-2xl border-2 border-primary bg-primary/10 p-6 sm:p-8">
+          <span
+            aria-hidden="true"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"
+          >
+            <Gift className="h-6 w-6" />
+          </span>
+          <div className="space-y-1">
+            <p className="text-xs font-semibold uppercase tracking-wide text-foreground/60">
+              Referral reward
+            </p>
+            <p className="text-xl font-bold leading-tight text-foreground">
+              {reward.rewardLabel}
+            </p>
+            <p className="text-sm font-medium text-foreground/80">
+              Refer {reward.threshold} friend{reward.threshold === 1 ? "" : "s"}{" "}
+              to earn {reward.rewardLabel}.
+            </p>
+          </div>
+        </section>
+      )}
+
       {/* Registration */}
       <section className="mt-10 rounded-2xl border border-border bg-secondary/40 p-6 sm:p-8">
-        <RegisterButton eventId={event._id} eventTitle={event.title} />
+        <RegisterButton
+          eventId={event._id}
+          eventTitle={event.title}
+          reward={reward}
+        />
       </section>
 
       {/* Referral sharing */}
-      <section className="mt-6">
+      <section id="share" className="mt-6 scroll-mt-8">
         <SharePanel
           eventId={event._id}
           eventTitle={event.title}
           eventDate={formatShareDate(event.startsAt)}
           eventLocation={event.location}
+          reward={reward}
         />
       </section>
 

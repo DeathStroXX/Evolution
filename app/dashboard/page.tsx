@@ -87,15 +87,21 @@ export default async function DashboardPage() {
         </CardHeader>
         <CardContent className="p-0">
           {list.length === 0 ? (
-            <div className="px-6 py-12 text-center text-sm text-muted-foreground">
-              You haven&apos;t created any events yet.{" "}
-              <Link
-                href="/dashboard/events/new"
-                className="font-medium text-foreground underline-offset-2 hover:underline"
-              >
-                Create your first event
-              </Link>
-              .
+            <div className="flex flex-col items-center gap-4 px-6 py-12 text-center">
+              <span className="text-3xl" aria-hidden="true">
+                📅
+              </span>
+              <div className="space-y-1">
+                <p className="text-base font-semibold text-foreground">
+                  No events yet
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Create your first event to start tracking turnout.
+                </p>
+              </div>
+              <Button asChild>
+                <Link href="/dashboard/events/new">Create your first event</Link>
+              </Button>
             </div>
           ) : (
             <div className="overflow-x-auto">

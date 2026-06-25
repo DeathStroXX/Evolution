@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { PointsToast } from "@/components/PointsToast";
+import { Confetti } from "@/components/Confetti";
 
 export const metadata: Metadata = {
   title: "Mainfranken Community Connect",
@@ -14,7 +16,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        <PointsToast />
+        <Confetti />
+      </body>
     </html>
   );
 }

@@ -46,6 +46,8 @@ export interface PointsEntry {
   eventId: string;
   reason: "share" | "signup" | "checkin";
   points: number;
+  /** Share platform (whatsapp, telegram, ...) — set for `reason: "share"` entries. */
+  platform?: string;
   dedupeKey: string;
   createdAt: Date;
 }

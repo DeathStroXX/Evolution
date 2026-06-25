@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ActivityTicker from "@/components/ActivityTicker";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -119,8 +120,13 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Live activity */}
+        <div className="mx-auto max-w-3xl px-4 pt-10 sm:px-6 lg:px-8">
+          <ActivityTicker />
+        </div>
+
         {/* Features */}
-        <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
+        <section className="mx-auto max-w-6xl px-4 pb-20 pt-10 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <span className="inline-block h-1.5 w-12 rounded-full bg-primary" />
             <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">

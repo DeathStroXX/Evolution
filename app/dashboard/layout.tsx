@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { CalendarDays, PlusCircle, QrCode } from "lucide-react";
+import { CalendarDays, PlusCircle, QrCode, Bell } from "lucide-react";
 
 const NAV = [
   { href: "/dashboard", label: "My Events", icon: CalendarDays, exact: true },
   { href: "/dashboard/events/new", label: "Create Event", icon: PlusCircle },
   { href: "/dashboard/checkin", label: "Check-in Scanner", icon: QrCode },
+  { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
 ];
 
 export default function DashboardLayout({

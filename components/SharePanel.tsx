@@ -15,6 +15,12 @@ import { cn } from "@/lib/utils";
 
 type Status = "loading" | "anonymous" | "ready" | "error";
 
+export interface EventReward {
+  mode: "signup" | "checkin";
+  threshold: number;
+  rewardLabel: string;
+}
+
 function extractUserId(data: unknown): string | null {
   if (!data || typeof data !== "object") return null;
   const d = data as Record<string, unknown>;
@@ -134,17 +140,20 @@ export default function SharePanel({
   eventTitle,
   eventDate,
   eventLocation,
+  reward = null,
 }: {
   eventId: string;
   eventTitle: string;
   eventDate?: string;
   eventLocation?: string;
+  reward?: EventReward | null;
 }) {
   const [status, setStatus] = useState<Status>("loading");
   const [code, setCode] = useState<string | null>(null);
   const [origin, setOrigin] = useState("");
   const [copied, setCopied] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [referralCount, setReferralCount] = useState<number | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") setOrigin(window.location.origin);
@@ -185,6 +194,29 @@ export default function SharePanel({
           setStatus("ready");
         } else {
           setStatus("error");
+          return;
+        }
+
+        // If a reward exists, load the user's progress toward it.
+        if (reward) {
+          try {
+            const ptsRes = await fetch(
+              `/api/points?eventId=${encodeURIComponent(
+                eventId
+              )}&userId=${encodeURIComponent(uid)}`,
+              { cache: "no-store" }
+            );
+            if (ptsRes.ok && !cancelled) {
+              const pts = await ptsRes.json();
+              const count =
+                reward.mode === "checkin"
+                  ? pts?.checkinCount
+                  : pts?.signupCount;
+              setReferralCount(typeof count === "number" ? count : 0);
+            }
+          } catch {
+            // Non-fatal — the progress bar simply won't render.
+          }
         }
       } catch {
         if (!cancelled) setStatus("error");
@@ -194,7 +226,7 @@ export default function SharePanel({
     return () => {
       cancelled = true;
     };
-  }, [eventId]);
+  }, [eventId, reward]);
 
   const referralLink = useMemo(() => {
     if (!code) return "";
@@ -250,6 +282,39 @@ export default function SharePanel({
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {reward && referralCount !== null && (
+          <div className="mb-6 rounded-lg border border-primary/30 bg-primary/10 p-4">
+            <div className="flex items-baseline justify-between gap-2 text-sm font-semibold text-foreground">
+              <span>
+                {Math.min(referralCount, reward.threshold)}/{reward.threshold}{" "}
+                referral{reward.threshold === 1 ? "" : "s"}
+              </span>
+              <span className="text-foreground/70">
+                {referralCount >= reward.threshold
+                  ? `Earned ${reward.rewardLabel} 🎉`
+                  : `earn a ${reward.rewardLabel}`}
+              </span>
+            </div>
+            <div
+              className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary"
+              role="progressbar"
+              aria-valuenow={Math.min(referralCount, reward.threshold)}
+              aria-valuemin={0}
+              aria-valuemax={reward.threshold}
+            >
+              <div
+                className="h-full rounded-full bg-primary transition-all"
+                style={{
+                  width: `${Math.min(
+                    100,
+                    (referralCount / reward.threshold) * 100
+                  )}%`,
+                }}
+              />
+            </div>
+          </div>
+        )}
+
         {status === "loading" && (
           <p className="text-sm text-muted-foreground" aria-live="polite">
             Loading your referral link…
