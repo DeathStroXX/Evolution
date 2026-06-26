@@ -96,7 +96,7 @@ const EVENTS = {
     tags: ["AI", "Machine Learning"],
     coverImage:
       "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=400&fit=crop",
-    reward: { rewardLabel: "Exclusive AI Workshop Pass", threshold: 3 },
+    reward: { rewardLabel: "€50 Lovable Credit", threshold: 3 },
   },
   sn: {
     _id: randomUUID(),
@@ -108,7 +108,7 @@ const EVENTS = {
     tags: ["Startups", "Networking"],
     coverImage:
       "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=400&fit=crop",
-    reward: { rewardLabel: "€50 Lovable Credit", threshold: 5 },
+    reward: { rewardLabel: "Exclusive AI Workshop Pass", threshold: 5 },
   },
   dv: {
     _id: randomUUID(),
