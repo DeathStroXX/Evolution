@@ -1,8 +1,11 @@
+import { cookies } from "next/headers";
 import { events, registrations, profiles } from "@/lib/collections";
+import { T } from "@/lib/i18n";
 import EventsGrid, {
   type SerializedEvent,
   type EventSocial,
 } from "@/components/EventsGrid";
+import ActivityTicker from "@/components/ActivityTicker";
 
 // Events come from MongoDB at request time — never statically prerender.
 export const dynamic = "force-dynamic";
@@ -25,6 +28,7 @@ async function getEvents(): Promise<SerializedEvent[]> {
     location: doc.location,
     imageUrl: doc.imageUrl,
     sourceUrl: doc.sourceUrl,
+    coverImage: doc.coverImage,
     tags: doc.tags ?? [],
   }));
 }
@@ -63,10 +67,23 @@ async function getSocialProof(): Promise<Record<string, EventSocial>> {
   return social;
 }
 
+// Which events the logged-in user has already registered for.
+async function getRegisteredEventIds(): Promise<string[]> {
+  const userId = cookies().get("session")?.value;
+  if (!userId) return [];
+
+  const regCol = await registrations();
+  const regs = await regCol
+    .find({ userId }, { projection: { eventId: 1 } })
+    .toArray();
+  return regs.map((r) => r.eventId);
+}
+
 export default async function EventsPage() {
-  const [allEvents, social] = await Promise.all([
+  const [allEvents, social, registeredEventIds] = await Promise.all([
     getEvents(),
     getSocialProof(),
+    getRegisteredEventIds(),
   ]);
 
   return (
@@ -74,13 +91,14 @@ export default async function EventsPage() {
       <header className="mb-10 max-w-2xl">
         <span className="inline-block h-1.5 w-12 rounded-full bg-primary" />
         <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-          IT-Events in der Region
+          <T k="events.title" />
         </h1>
         <p className="mt-3 text-muted-foreground">
-          Discover meetups, workshops, and gatherings across the Mainfranken
-          tech community. We look forward to seeing you there.
+          <T k="events.subtitle" />
         </p>
       </header>
+
+      <ActivityTicker />
 
       {allEvents.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border py-20 text-center">
@@ -90,7 +108,11 @@ export default async function EventsPage() {
           </p>
         </div>
       ) : (
-        <EventsGrid events={allEvents} social={social} />
+        <EventsGrid
+          events={allEvents}
+          social={social}
+          registeredEventIds={registeredEventIds}
+        />
       )}
     </div>
   );

@@ -3,13 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n";
 import AuthButton from "@/components/AuthButton";
+import LanguageToggle from "@/components/LanguageToggle";
 
+// tKey is looked up via the i18n hook; "Home" has no key and stays as-is.
 const navLinks = [
   { href: "/", label: "Home" },
-  { href: "/events", label: "Events" },
+  { href: "/events", label: "Events", tKey: "nav.events" },
   { href: "/leaderboard", label: "Leaderboard" },
-  { href: "/dashboard", label: "Dashboard" },
+  { href: "/dashboard", label: "Dashboard", tKey: "nav.dashboard" },
 ];
 
 function BrandMark() {
@@ -30,6 +33,7 @@ function BrandMark() {
 
 export default function Header() {
   const [open, setOpen] = useState(false);
+  const { t } = useLanguage();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-white">
@@ -46,9 +50,10 @@ export default function Header() {
               href={link.href}
               className="text-sm font-medium text-foreground/70 transition-colors hover:text-foreground"
             >
-              {link.label}
+              {link.tKey ? t(link.tKey) : link.label}
             </Link>
           ))}
+          <LanguageToggle />
           <AuthButton />
         </nav>
 
@@ -103,9 +108,12 @@ export default function Header() {
               onClick={() => setOpen(false)}
               className="rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-secondary hover:text-foreground"
             >
-              {link.label}
+              {link.tKey ? t(link.tKey) : link.label}
             </Link>
           ))}
+          <div className="px-3 py-2">
+            <LanguageToggle />
+          </div>
           <div className="px-3 py-2">
             <AuthButton />
           </div>

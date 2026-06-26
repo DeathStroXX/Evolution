@@ -14,11 +14,13 @@ export interface Event {
   location?: string;
   sourceUrl?: string;
   imageUrl?: string;
+  coverImage?: string;
   tags: string[];
   organizerId?: string;
   seatLimit?: number;
   clicks?: number;
   pitchEmailSent?: boolean;
+  pointsRuleId?: string;
   createdAt: Date;
 }
 
@@ -48,6 +50,8 @@ export interface PointsEntry {
   eventId: string;
   reason: "share" | "signup" | "checkin";
   points: number;
+  /** Share platform (whatsapp, telegram, ...) — set for `reason: "share"` entries. */
+  platform?: string;
   dedupeKey: string;
   createdAt: Date;
 }

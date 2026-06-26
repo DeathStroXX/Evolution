@@ -41,6 +41,7 @@ export async function POST(request: Request) {
     eventId,
     reason: "share",
     points: SHARE_POINTS,
+    platform,
     dedupeKey: `share:${userId}:${eventId}:${platform}`,
     createdAt: new Date(),
   };

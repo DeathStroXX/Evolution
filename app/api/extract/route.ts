@@ -122,8 +122,9 @@ export async function POST(req: NextRequest) {
         { status: 422 }
       );
     }
-  } catch (err: any) {
-    console.error("Extract route error:", err);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Extract route error:", message);
     return NextResponse.json({ error: "Server error during extraction." }, { status: 500 });
   }
 }

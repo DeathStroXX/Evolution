@@ -1,9 +1,20 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
-import { events, registrations, profiles } from "@/lib/collections";
+import { ShieldCheck } from "lucide-react";
+import {
+  events,
+  registrations,
+  profiles,
+  rewardRules,
+  pointsLedger,
+} from "@/lib/collections";
+import { T } from "@/lib/i18n";
 import { Badge } from "@/components/ui/badge";
 import RegisterButton from "@/components/RegisterButton";
 import SharePanel from "@/components/SharePanel";
+import ReferralBanner from "@/components/ReferralBanner";
+import EventLeaderboardPublic from "@/components/EventLeaderboardPublic";
 
 // Event + registration data is read from MongoDB at request time.
 export const dynamic = "force-dynamic";
@@ -16,6 +27,21 @@ const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
   hour: "numeric",
   minute: "2-digit",
 });
+
+// Concise variant for the share message (e.g. "Mon, Jan 5, 6:00 PM").
+const shareDateFormatter = new Intl.DateTimeFormat("en-US", {
+  weekday: "short",
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
+
+function formatShareDate(value?: Date) {
+  if (!value) return undefined;
+  const d = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(d.getTime()) ? undefined : shareDateFormatter.format(d);
+}
 
 function formatDateTime(value?: Date) {
   if (!value) return "Date & time to be announced";
@@ -44,6 +70,17 @@ function colorFor(name: string) {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
+// Pick a fitting emoji for the reward based on keywords in its name.
+function rewardEmoji(label: string): string {
+  const l = label.toLowerCase();
+  if (l.includes("hoodie")) return "🎽";
+  if (l.includes("shirt")) return "👕";
+  if (l.includes("ticket")) return "🎟️";
+  if (l.includes("pass")) return "🎫";
+  if (l.includes("license") || l.includes("licence")) return "💻";
+  return "🎁";
+}
+
 export default async function EventDetailPage({
   params,
 }: {
@@ -54,6 +91,32 @@ export default async function EventDetailPage({
 
   if (!event) {
     notFound();
+  }
+
+  // Reward rule for this event (if the organizer set one). Serialized down to
+  // a plain object so it can cross into the client components below.
+  const rewardRulesCol = await rewardRules();
+  const rewardDoc = await rewardRulesCol.findOne({ _id: params.id });
+  const reward = rewardDoc
+    ? {
+        mode: rewardDoc.mode,
+        threshold: rewardDoc.threshold,
+        rewardLabel: rewardDoc.rewardLabel,
+      }
+    : null;
+
+  // If the visitor is logged in and a reward exists, count the referrals they've
+  // already driven for this event (sign-ups or check-ins, per the reward mode)
+  // so the showcase card can show their progress.
+  const sessionUserId = cookies().get("session")?.value;
+  let userReferralCount: number | null = null;
+  if (reward && sessionUserId) {
+    const ledgerCol = await pointsLedger();
+    userReferralCount = await ledgerCol.countDocuments({
+      eventId: params.id,
+      userId: sessionUserId,
+      reason: reward.mode,
+    });
   }
 
   const registrationsCol = await registrations();
@@ -78,36 +141,27 @@ export default async function EventDetailPage({
 
   return (
     <article className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
-      {/* Cover */}
-      {event.imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={event.imageUrl}
-          alt={event.title}
-          className="aspect-[16/9] w-full rounded-2xl object-cover"
+      {/* "[Name] invited you" — shown only when arriving via a ?ref= link */}
+      <ReferralBanner />
+
+      {/* Cover hero */}
+      <div className="relative h-48 w-full overflow-hidden rounded-xl bg-muted md:h-64">
+        {event.coverImage || event.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={event.coverImage || event.imageUrl}
+            alt={event.title}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="h-full w-full bg-gradient-to-br from-primary/25 via-primary/5 to-background" />
+        )}
+        {/* Subtle dark gradient at the bottom for legibility of overlaid text */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/40 to-transparent"
         />
-      ) : (
-        <div className="flex aspect-[16/9] w-full items-center justify-center rounded-2xl border border-border bg-muted">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="56"
-            height="56"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-muted-foreground/40"
-            aria-hidden="true"
-          >
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
-        </div>
-      )}
+      </div>
 
       {/* Header */}
       <header className="mt-8">
@@ -124,9 +178,9 @@ export default async function EventDetailPage({
 
         <Link
           href={`/events/${event._id}/leaderboard`}
-          className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3.5 py-1.5 text-sm font-medium text-foreground/80 transition-colors hover:border-primary hover:text-foreground"
+          className="mt-4 inline-flex items-center gap-2 rounded-full border-2 border-primary bg-primary/10 px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-primary/20"
         >
-          🏆 View referral leaderboard
+          🏆 <T k="event.leaderboard" />
         </Link>
 
         <dl className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -154,7 +208,7 @@ export default async function EventDetailPage({
             </span>
             <div>
               <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                When
+                <T k="event.when" />
               </dt>
               <dd className="text-sm font-medium">
                 {formatDateTime(event.startsAt)}
@@ -182,7 +236,7 @@ export default async function EventDetailPage({
               </span>
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Where
+                  <T k="event.where" />
                 </dt>
                 <dd className="text-sm font-medium">{event.location}</dd>
               </div>
@@ -196,6 +250,83 @@ export default async function EventDetailPage({
         <div className="mt-8 whitespace-pre-line leading-relaxed text-foreground/90">
           {event.description}
         </div>
+      )}
+
+      {/* Public top referrers — hidden until the event has referrals */}
+      <EventLeaderboardPublic eventId={event._id} />
+
+      {/* Reward showcase — premium "What you can earn" card, above register CTA */}
+      {reward && !event.sourceUrl && (
+        <section className="mt-10">
+          <div className="rounded-2xl bg-gradient-to-br from-lime-400 via-lime-500 to-emerald-500 p-[2px] shadow-lg">
+            <div className="rounded-[15px] bg-card p-6 sm:p-8">
+              <div className="flex items-start gap-4">
+                <span
+                  aria-hidden="true"
+                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-lime-400/20 to-emerald-500/20 text-3xl"
+                >
+                  {rewardEmoji(reward.rewardLabel)}
+                </span>
+                <div className="min-w-0 flex-1 space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
+                    <T k="event.reward.title" />
+                  </p>
+                  <h2 className="text-2xl font-bold leading-tight text-foreground">
+                    {reward.rewardLabel}
+                  </h2>
+                  <p className="text-sm font-medium text-foreground/80">
+                    <T k="event.reward.refer" p={{ n: reward.threshold }} />
+                  </p>
+                </div>
+              </div>
+
+              {userReferralCount !== null && (
+                <div className="mt-6">
+                  <div className="flex items-baseline justify-between text-sm font-semibold">
+                    <span className="text-foreground">
+                      {Math.min(userReferralCount, reward.threshold)}/
+                      {reward.threshold} <T k="event.reward.referrals" />
+                    </span>
+                    <span className="text-foreground/60">
+                      {userReferralCount >= reward.threshold ? (
+                        <>
+                          <T k="event.reward.unlocked" /> 🎉
+                        </>
+                      ) : (
+                        <>
+                          {reward.threshold - userReferralCount}{" "}
+                          <T k="event.reward.toGo" />
+                        </>
+                      )}
+                    </span>
+                  </div>
+                  <div
+                    className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-secondary"
+                    role="progressbar"
+                    aria-valuenow={Math.min(userReferralCount, reward.threshold)}
+                    aria-valuemin={0}
+                    aria-valuemax={reward.threshold}
+                  >
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-lime-400 to-emerald-500 transition-all"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          (userReferralCount / reward.threshold) * 100
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <p className="mt-6 flex items-center gap-2 rounded-lg bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
+                <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />
+                <T k="event.reward.redeemNote" />
+              </p>
+            </div>
+          </div>
+        </section>
       )}
 
       {/* Registration / External Link */}
@@ -218,13 +349,23 @@ export default async function EventDetailPage({
             </a>
           </div>
         ) : (
-          <RegisterButton eventId={event._id} eventTitle={event.title} />
+          <RegisterButton
+            eventId={event._id}
+            eventTitle={event.title}
+            reward={reward}
+          />
         )}
       </section>
 
       {/* Referral sharing */}
-      <section className="mt-6">
-        <SharePanel eventId={event._id} eventTitle={event.title} />
+      <section id="share" className="mt-6 scroll-mt-8">
+        <SharePanel
+          eventId={event._id}
+          eventTitle={event.title}
+          eventDate={formatShareDate(event.startsAt)}
+          eventLocation={event.location}
+          reward={reward}
+        />
       </section>
 
       {/* Who's going */}

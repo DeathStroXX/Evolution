@@ -16,8 +16,24 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  EventAnalytics,
+  type PlatformDatum,
+  type AnalyticsRow,
+} from "@/components/dashboard/EventAnalytics";
 
 export const dynamic = "force-dynamic";
+
+/** Share platforms we track, in display order. */
+const PLATFORMS: { key: string; label: string }[] = [
+  { key: "whatsapp", label: "WhatsApp" },
+  { key: "telegram", label: "Telegram" },
+  { key: "linkedin", label: "LinkedIn" },
+  { key: "x", label: "X" },
+  { key: "reddit", label: "Reddit" },
+  { key: "discord", label: "Discord" },
+];
+const PLATFORM_LABEL = new Map(PLATFORMS.map((p) => [p.key, p.label]));
 
 function formatDate(d?: Date) {
   if (!d) return "Date to be announced";
@@ -47,7 +63,18 @@ export default async function EventDetailPage({
     registrationsCol.countDocuments({ eventId: event._id, checkedIn: true }),
   ]);
 
-  const ambassadors = await getReferralStats(event._id);
+  const [ambassadors, shareStats] = await Promise.all([
+    getReferralStats(event._id),
+    getShareAnalytics(event._id),
+  ]);
+
+  const analyticsRows: AnalyticsRow[] = ambassadors.map((a) => ({
+    name: a.name,
+    email: a.email,
+    signups: a.signups,
+    checkins: a.checkins,
+    platform: shareStats.platformByReferrer.get(a.referrerId) ?? "—",
+  }));
 
   return (
     <div className="space-y-8">
@@ -89,6 +116,23 @@ export default async function EventDetailPage({
         <StatCard
           label="Seat limit"
           value={event.seatLimit ?? "—"}
+        />
+      </div>
+
+      <div className="space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Analytics
+        </h2>
+        <EventAnalytics
+          platform={shareStats.platformBreakdown}
+          funnel={{
+            shares: shareStats.totalShares,
+            registrations: registrationCount,
+            checkins: checkinCount,
+          }}
+          rows={analyticsRows}
+          isMockPlatform={shareStats.isMock}
+          eventTitle={event.title}
         />
       </div>
 
@@ -233,6 +277,83 @@ async function getReferralStats(eventId: string): Promise<AmbassadorRow[]> {
 
   rows.sort((a, b) => b.checkins - a.checkins);
   return rows;
+}
+
+interface ShareAnalytics {
+  platformBreakdown: PlatformDatum[];
+  totalShares: number;
+  isMock: boolean;
+  /** referrerId -> the platform label they share through most. */
+  platformByReferrer: Map<string, string>;
+}
+
+/**
+ * Aggregate share activity for an event into a per-platform breakdown plus the
+ * dominant platform per referrer. Share platform lives on `reason: "share"`
+ * ledger entries (newer docs carry a `platform` field; older ones encode it in
+ * the dedupeKey). When an event has no real shares yet, returns demo data so the
+ * organizer dashboard still tells a story.
+ */
+async function getShareAnalytics(eventId: string): Promise<ShareAnalytics> {
+  const ledgerCol = await pointsLedger();
+  const shareEntries = await ledgerCol
+    .find({ eventId, reason: "share" })
+    .toArray();
+
+  const counts = new Map<string, number>();
+  // referrerId -> per-platform tally, to pick their top channel.
+  const perReferrer = new Map<string, Map<string, number>>();
+
+  for (const entry of shareEntries) {
+    const platform = entry.platform ?? platformFromDedupeKey(entry.dedupeKey);
+    if (!platform || !PLATFORM_LABEL.has(platform)) continue;
+
+    counts.set(platform, (counts.get(platform) ?? 0) + 1);
+
+    const byPlatform = perReferrer.get(entry.userId) ?? new Map();
+    byPlatform.set(platform, (byPlatform.get(platform) ?? 0) + 1);
+    perReferrer.set(entry.userId, byPlatform);
+  }
+
+  const platformByReferrer = new Map<string, string>();
+  Array.from(perReferrer.entries()).forEach(([referrerId, byPlatform]) => {
+    let top = "";
+    let topCount = 0;
+    Array.from(byPlatform.entries()).forEach(([platform, count]) => {
+      if (count > topCount) {
+        top = platform;
+        topCount = count;
+      }
+    });
+    if (top) platformByReferrer.set(referrerId, PLATFORM_LABEL.get(top)!);
+  });
+
+  const real = shareEntries.length > 0;
+  // Deterministic sample distribution for empty events.
+  const MOCK = [18, 12, 9, 7, 5, 3];
+  const breakdown: PlatformDatum[] = PLATFORMS.map((p, i) => ({
+    key: p.key,
+    label: p.label,
+    count: real ? counts.get(p.key) ?? 0 : MOCK[i] ?? 0,
+  }))
+    .filter((p) => p.count > 0)
+    .sort((a, b) => b.count - a.count);
+
+  const totalShares = breakdown.reduce((sum, p) => sum + p.count, 0);
+
+  return {
+    platformBreakdown: breakdown,
+    totalShares,
+    isMock: !real,
+    platformByReferrer,
+  };
+}
+
+/** Extract the trailing platform segment from `share:user:event:platform`. */
+function platformFromDedupeKey(dedupeKey: string): string | null {
+  if (!dedupeKey.startsWith("share:")) return null;
+  const parts = dedupeKey.split(":");
+  return parts.length >= 4 ? parts[parts.length - 1] : null;
 }
 
 function formatRelative(date: Date) {

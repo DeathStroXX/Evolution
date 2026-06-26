@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import QRCode from "qrcode";
+import { useLanguage } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 
 type Status =
@@ -17,6 +18,12 @@ interface RegistrationLike {
   _id: string;
 }
 
+export interface EventReward {
+  mode: "signup" | "checkin";
+  threshold: number;
+  rewardLabel: string;
+}
+
 function extractUserId(data: unknown): string | null {
   if (!data || typeof data !== "object") return null;
   const d = data as Record<string, unknown>;
@@ -28,11 +35,14 @@ function extractUserId(data: unknown): string | null {
 export default function RegisterButton({
   eventId,
   eventTitle,
+  reward = null,
 }: {
   eventId: string;
   eventTitle: string;
+  reward?: EventReward | null;
 }) {
   const searchParams = useSearchParams();
+  const { t } = useLanguage();
   const ref = searchParams.get("ref") ?? undefined;
 
   const [status, setStatus] = useState<Status>("loading");
@@ -158,6 +168,10 @@ export default function RegisterButton({
   }
 
   if (status === "anonymous") {
+    // Send the user back to this event after auth — preserving the referral
+    // code so the referrer gets credited when they register.
+    const returnTo = `/events/${eventId}${ref ? `?ref=${ref}` : ""}`;
+    const authHref = `/auth?redirect=${encodeURIComponent(returnTo)}`;
     return (
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
@@ -165,7 +179,7 @@ export default function RegisterButton({
           <span className="font-medium text-foreground">{eventTitle}</span>.
         </p>
         <Button asChild size="lg">
-          <Link href="/auth">Join to Register</Link>
+          <Link href={authHref}>Join to Register</Link>
         </Button>
       </div>
     );
@@ -173,40 +187,55 @@ export default function RegisterButton({
 
   if (status === "registered") {
     return (
-      <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-center sm:gap-6 sm:text-left">
-        <div className="flex items-center gap-2.5">
-          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M20 6 9 17l-5-5" />
-            </svg>
-          </span>
-          <span className="text-lg font-semibold text-foreground">
-            You&rsquo;re registered
-          </span>
-        </div>
-        {qrDataUrl && (
-          <div className="flex flex-col items-center gap-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={qrDataUrl}
-              alt="Your registration QR code"
-              className="h-40 w-40 rounded-lg border border-border bg-white p-2"
-            />
-            <p className="text-xs text-muted-foreground">
-              Show this QR code at check-in
-            </p>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-center sm:gap-6 sm:text-left">
+          <div className="flex items-center gap-2.5">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+            </span>
+            <span className="text-lg font-semibold text-foreground">
+              You&rsquo;re registered
+            </span>
           </div>
+          {qrDataUrl && (
+            <div className="flex flex-col items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={qrDataUrl}
+                alt="Your registration QR code"
+                className="h-40 w-40 rounded-lg border border-border bg-white p-2"
+              />
+              <p className="text-xs text-muted-foreground">
+                Show this QR code at check-in
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Post-registration: push sharing as the dominant next action. */}
+        {reward && (
+          <Button
+            asChild
+            size="lg"
+            className="h-12 w-full text-base font-semibold"
+          >
+            <a href="#share">
+              Share with friends to earn {reward.rewardLabel}
+            </a>
+          </Button>
         )}
       </div>
     );
@@ -225,7 +254,7 @@ export default function RegisterButton({
           onClick={handleRegister}
           disabled={submitting}
         >
-          {submitting ? "Registering…" : "Register"}
+          {submitting ? `${t("event.register")}…` : t("event.register")}
         </Button>
       </div>
       {error && (

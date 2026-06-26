@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export interface SerializedEvent {
@@ -14,6 +15,7 @@ export interface SerializedEvent {
   location?: string;
   imageUrl?: string;
   sourceUrl?: string;
+  coverImage?: string;
   tags: string[];
 }
 
@@ -75,27 +77,54 @@ function Avatar({ name }: { name: string }) {
   );
 }
 
-function CalendarPlaceholder() {
+interface RewardRuleLite {
+  threshold: number;
+  rewardLabel: string;
+}
+
+// Fetches the event's reward rule (if any) and renders a small banner at the
+// bottom of the card. Renders nothing when the event has no reward.
+function RewardBanner({ eventId }: { eventId: string }) {
+  const [rule, setRule] = useState<RewardRuleLite | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/reward-rules?eventId=${encodeURIComponent(eventId)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled || !data || typeof data.rewardLabel !== "string") return;
+        setRule({ threshold: data.threshold, rewardLabel: data.rewardLabel });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [eventId]);
+
+  if (!rule) return null;
+
   return (
-    <div className="flex aspect-[16/9] w-full items-center justify-center border-b border-border bg-muted">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="40"
-        height="40"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="text-muted-foreground/50"
-        aria-hidden="true"
-      >
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-        <line x1="16" y1="2" x2="16" y2="6" />
-        <line x1="8" y1="2" x2="8" y2="6" />
-        <line x1="3" y1="10" x2="21" y2="10" />
-      </svg>
+    <div className="mt-auto flex items-center gap-2 border-t border-border bg-primary/10 px-6 py-3 text-sm font-semibold text-foreground">
+      <span aria-hidden="true">🎁</span>
+      <span className="line-clamp-1">
+        {rule.rewardLabel} for {rule.threshold} referral
+        {rule.threshold === 1 ? "" : "s"}
+      </span>
+    </div>
+  );
+}
+
+// Lime-tinted gradient shown when an event has no cover image. Image-forward,
+// Luma-style — no calendar icon, just a soft brand wash.
+function CoverPlaceholder({ title }: { title: string }) {
+  return (
+    <div
+      aria-hidden="true"
+      className="flex aspect-[2/1] w-full items-center justify-center bg-gradient-to-br from-primary/20 via-primary/5 to-background"
+    >
+      <span className="text-3xl font-black uppercase text-primary/40">
+        {initial(title)}
+      </span>
     </div>
   );
 }
@@ -103,11 +132,19 @@ function CalendarPlaceholder() {
 export default function EventsGrid({
   events,
   social = {},
+  registeredEventIds = [],
 }: {
   events: SerializedEvent[];
   social?: Record<string, EventSocial>;
+  registeredEventIds?: string[];
 }) {
+  const { t } = useLanguage();
   const [active, setActive] = useState<string>("All");
+
+  const registeredSet = useMemo(
+    () => new Set(registeredEventIds),
+    [registeredEventIds]
+  );
 
   const filtered = useMemo(() => {
     if (active === "All") return events;
@@ -135,20 +172,38 @@ export default function EventsGrid({
                   : "border-border bg-white text-foreground/70 hover:border-primary hover:text-foreground"
               )}
             >
-              {filter}
+              {filter === "All" ? t("events.allFilter") : filter}
             </button>
           );
         })}
       </div>
 
       {filtered.length === 0 ? (
-        <p className="py-16 text-center text-muted-foreground">
-          No events match this filter.
-        </p>
+        <div className="rounded-xl border border-dashed border-border py-16 text-center">
+          <p className="text-2xl" aria-hidden="true">
+            🔍
+          </p>
+          <p className="mt-3 text-lg font-semibold">
+            No events match your filters
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Try a different category to see more events.
+          </p>
+          {active !== "All" && (
+            <button
+              type="button"
+              onClick={() => setActive("All")}
+              className="mt-5 inline-flex items-center rounded-full border border-primary bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((event) => {
             const proof = social[event._id];
+            const isRegistered = registeredSet.has(event._id);
             return (
               <Link
                 key={event._id}
@@ -162,17 +217,23 @@ export default function EventsGrid({
                   }
                 }}
               >
-              <Card className="flex h-full flex-col overflow-hidden border-border transition-all duration-200 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-md group-focus-visible:ring-2 group-focus-visible:ring-ring">
+              <Card className="relative flex h-full flex-col overflow-hidden rounded-xl border-border shadow-sm transition-all duration-200 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-md group-focus-visible:ring-2 group-focus-visible:ring-ring">
+                {isRegistered && (
+                  <span className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground shadow">
+                    {t("events.registered")} ✓
+                  </span>
+                )}
                 {/* Cover image / placeholder */}
-                {event.imageUrl ? (
+                {event.coverImage || event.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={event.imageUrl}
+                    src={event.coverImage || event.imageUrl}
                     alt={event.title}
-                    className="aspect-[16/9] w-full border-b border-border object-cover"
+                    loading="lazy"
+                    className="aspect-[2/1] w-full bg-muted object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                   />
                 ) : (
-                  <CalendarPlaceholder />
+                  <CoverPlaceholder title={event.title} />
                 )}
 
                 <CardHeader className="space-y-2">
@@ -230,10 +291,13 @@ export default function EventsGrid({
                       ))}
                     </div>
                     <span className="text-sm font-medium text-muted-foreground">
-                      {proof.count === 1 ? "1 going" : `${proof.count} going`}
+                      {proof.count} {t("events.going")}
                     </span>
                   </div>
                 )}
+
+                {/* Reward banner — surfaces the event's referral reward */}
+                <RewardBanner eventId={event._id} />
               </Card>
             </Link>
             );

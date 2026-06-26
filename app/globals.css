@@ -100,3 +100,60 @@
     @apply font-bold tracking-tight;
   }
 }
+
+@layer utilities {
+  /* Floating "+N pts" toast: rises, holds, then drifts up and fades. */
+  @keyframes points-toast {
+    0% {
+      opacity: 0;
+      transform: translateY(18px) scale(0.9);
+    }
+    12% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    70% {
+      opacity: 1;
+      transform: translateY(-6px) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-44px) scale(0.95);
+    }
+  }
+  .animate-points-toast {
+    animation: points-toast 1.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  /* Confetti piece: bursts outward to its per-piece --dx/--dy and spins. */
+  @keyframes confetti-burst {
+    0% {
+      opacity: 1;
+      transform: translate3d(0, 0, 0) rotate(0deg);
+    }
+    100% {
+      opacity: 0;
+      transform: translate3d(var(--dx, 0), var(--dy, 200px), 0)
+        rotate(var(--rot, 360deg));
+    }
+  }
+  .animate-confetti-burst {
+    animation: confetti-burst var(--dur, 1.1s) cubic-bezier(0.16, 1, 0.3, 1)
+      forwards;
+  }
+
+  /* Live activity ticker: each entry slides up + fades in as it rotates. */
+  @keyframes activity-ticker-in {
+    0% {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .animate-activity-ticker-in {
+    animation: activity-ticker-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}

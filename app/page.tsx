@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ActivityTicker from "@/components/ActivityTicker";
+import { T } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -103,24 +105,31 @@ export default function Home() {
               IT-Verband Mainfranken
             </span>
             <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">
-              Discover Tech Events in Mainfranken
+              <T k="home.hero.title" />
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground">
-              Find, share, and connect with the local tech community.
+              <T k="home.hero.subtitle" />
             </p>
             <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
               <Button asChild size="lg">
-                <Link href="/events">Browse events</Link>
+                <Link href="/events">
+                  <T k="home.hero.cta" />
+                </Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link href="/auth">Join the community</Link>
+                <Link href="/auth">{<T k="auth.title" />}</Link>
               </Button>
             </div>
           </div>
         </section>
 
+        {/* Live activity */}
+        <div className="mx-auto max-w-3xl px-4 pt-10 sm:px-6 lg:px-8">
+          <ActivityTicker />
+        </div>
+
         {/* Features */}
-        <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
+        <section className="mx-auto max-w-6xl px-4 pb-20 pt-10 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <span className="inline-block h-1.5 w-12 rounded-full bg-primary" />
             <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
@@ -164,7 +173,9 @@ export default function Home() {
               seconds.
             </p>
             <Button asChild size="lg" className="mt-7">
-              <Link href="/events">Explore events</Link>
+              <Link href="/events">
+                <T k="home.hero.cta" />
+              </Link>
             </Button>
           </div>
         </section>

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useLanguage } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 
 interface MeProfile {
@@ -11,13 +13,20 @@ interface MeProfile {
 }
 
 export default function AuthButton() {
+  const pathname = usePathname();
+  const { t } = useLanguage();
   const [user, setUser] = useState<MeProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
 
+  // Re-check the session on every route change (deps: pathname). After login
+  // the auth page calls router.push(), a client-side navigation that changes
+  // the pathname — this re-runs the check so the nav immediately reflects the
+  // new session without a manual refresh. The focus listener still covers the
+  // case of returning to the tab from elsewhere.
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    async function check() {
       try {
         const res = await fetch("/api/auth/me", { cache: "no-store" });
         if (!cancelled) setUser(res.ok ? await res.json() : null);
@@ -26,11 +35,14 @@ export default function AuthButton() {
       } finally {
         if (!cancelled) setLoading(false);
       }
-    })();
+    }
+    check();
+    window.addEventListener("focus", check);
     return () => {
       cancelled = true;
+      window.removeEventListener("focus", check);
     };
-  }, []);
+  }, [pathname]);
 
   async function handleSignOut() {
     setSigningOut(true);
@@ -49,7 +61,7 @@ export default function AuthButton() {
   if (!user) {
     return (
       <Button asChild size="sm">
-        <Link href="/auth">Join</Link>
+        <Link href="/auth">{t("nav.join")}</Link>
       </Button>
     );
   }
@@ -63,7 +75,7 @@ export default function AuthButton() {
         href="/me"
         className="text-sm font-medium text-foreground/70 transition-colors hover:text-foreground"
       >
-        My Points
+        {t("nav.myPoints")}
       </Link>
       <Button
         variant="outline"
@@ -71,7 +83,7 @@ export default function AuthButton() {
         onClick={handleSignOut}
         disabled={signingOut}
       >
-        {signingOut ? "Signing out…" : "Sign out"}
+        {signingOut ? "…" : t("nav.signOut")}
       </Button>
     </div>
   );
