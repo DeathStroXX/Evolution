@@ -13,6 +13,7 @@ export interface SerializedEvent {
   startsAt?: string;
   location?: string;
   imageUrl?: string;
+  sourceUrl?: string;
   tags: string[];
 }
 
@@ -149,11 +150,18 @@ export default function EventsGrid({
           {filtered.map((event) => {
             const proof = social[event._id];
             return (
-            <Link
-              key={event._id}
-              href={`/events/${event._id}`}
-              className="group block focus:outline-none"
-            >
+              <Link
+                key={event._id}
+                href={event.sourceUrl ? event.sourceUrl : `/events/${event._id}`}
+                target={event.sourceUrl ? "_blank" : undefined}
+                rel={event.sourceUrl ? "noopener noreferrer" : undefined}
+                className="group block focus:outline-none"
+                onClick={() => {
+                  if (event.sourceUrl) {
+                    fetch(`/api/events/${event._id}/click`, { method: "POST" }).catch(console.error);
+                  }
+                }}
+              >
               <Card className="flex h-full flex-col overflow-hidden border-border transition-all duration-200 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-md group-focus-visible:ring-2 group-focus-visible:ring-ring">
                 {/* Cover image / placeholder */}
                 {event.imageUrl ? (
@@ -168,9 +176,16 @@ export default function EventsGrid({
                 )}
 
                 <CardHeader className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {formatDate(event.startsAt)}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {formatDate(event.startsAt)}
+                    </p>
+                    {event.sourceUrl && (
+                      <span className="rounded-sm bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground">
+                        External Source
+                      </span>
+                    )}
+                  </div>
                   <CardTitle className="line-clamp-2 text-lg font-bold leading-snug transition-colors group-hover:text-foreground">
                     {event.title}
                   </CardTitle>

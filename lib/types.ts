@@ -17,6 +17,8 @@ export interface Event {
   tags: string[];
   organizerId?: string;
   seatLimit?: number;
+  clicks?: number;
+  pitchEmailSent?: boolean;
   createdAt: Date;
 }
 

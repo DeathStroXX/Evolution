@@ -198,9 +198,28 @@ export default async function EventDetailPage({
         </div>
       )}
 
-      {/* Registration */}
+      {/* Registration / External Link */}
       <section className="mt-10 rounded-2xl border border-border bg-secondary/40 p-6 sm:p-8">
-        <RegisterButton eventId={event._id} eventTitle={event.title} />
+        {event.sourceUrl ? (
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Attend this event</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                This event is hosted externally. You can find more details and register on the organizer's website.
+              </p>
+            </div>
+            <a
+              href={event.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex h-11 items-center justify-center rounded-full bg-primary px-8 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 sm:mt-0"
+            >
+              Open external page
+            </a>
+          </div>
+        ) : (
+          <RegisterButton eventId={event._id} eventTitle={event.title} />
+        )}
       </section>
 
       {/* Referral sharing */}

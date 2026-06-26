@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import BulkIngestForm from "@/components/BulkIngestForm";
 
 export const dynamic = "force-dynamic";
 
@@ -80,6 +81,8 @@ export default async function DashboardPage() {
         <StatCard label="Registrations" value={totalRegistrations} />
         <StatCard label="Check-ins" value={totalCheckins} />
       </div>
+
+      <BulkIngestForm />
 
       <Card>
         <CardHeader>

@@ -24,6 +24,7 @@ async function getEvents(): Promise<SerializedEvent[]> {
     startsAt: toISO(doc.startsAt),
     location: doc.location,
     imageUrl: doc.imageUrl,
+    sourceUrl: doc.sourceUrl,
     tags: doc.tags ?? [],
   }));
 }

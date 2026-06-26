@@ -8,6 +8,7 @@ import AuthButton from "@/components/AuthButton";
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/events", label: "Events" },
+  { href: "/leaderboard", label: "Leaderboard" },
   { href: "/dashboard", label: "Dashboard" },
 ];
 
