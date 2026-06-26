@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { events, pointsLedger, profiles } from "@/lib/collections";
 import type { Profile } from "@/lib/types";
+import { computeTier, type TierName } from "@/lib/points";
 
 // Leaderboard is aggregated from the points ledger at request time.
 export const dynamic = "force-dynamic";
@@ -12,6 +13,14 @@ interface LeaderboardRow {
   checkinCount: number;
   signupCount: number;
 }
+
+// Tier pill styling, indexed to match lib/points TIERS order (Bronze→Diamond).
+const TIER_PILL: Record<TierName, string> = {
+  Bronze: "bg-amber-700/15 text-amber-700",
+  Silver: "bg-slate-400/20 text-slate-600",
+  Gold: "bg-yellow-500/20 text-yellow-700",
+  Diamond: "bg-cyan-400/20 text-cyan-600",
+};
 
 const rankAccents = [
   {
@@ -86,6 +95,21 @@ export default async function EventLeaderboardPage({
     profileDocs.map((p: Profile) => [p._id, p.name ?? p.email ?? "Anonymous"]),
   );
 
+  // Tier reflects a member's OVERALL standing — their total points across every
+  // event — so the tier shown here matches the one on their /me profile. The
+  // points column below is per-event ("Event points"), a deliberately different
+  // metric. Both derive from the single source of truth in lib/points.ts.
+  const totalsByUser = new Map<string, number>();
+  if (userIds.length > 0) {
+    const totals = await ledgerCol
+      .aggregate<{ _id: string; points: number }>([
+        { $match: { userId: { $in: userIds } } },
+        { $group: { _id: "$userId", points: { $sum: "$points" } } },
+      ])
+      .toArray();
+    for (const t of totals) totalsByUser.set(t._id, t.points);
+  }
+
   return (
     <article className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
       <header className="mb-8">
@@ -116,6 +140,7 @@ export default async function EventLeaderboardPage({
             const rank = index + 1;
             const accent = rankAccents[index];
             const name = nameById.get(row.userId) ?? "Anonymous";
+            const tier = computeTier(totalsByUser.get(row.userId) ?? 0).tier;
 
             return (
               <li
@@ -133,7 +158,15 @@ export default async function EventLeaderboardPage({
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold">{name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="truncate font-semibold">{name}</p>
+                    <span
+                      className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${TIER_PILL[tier]}`}
+                      title="Overall tier (total points across all events)"
+                    >
+                      {tier}
+                    </span>
+                  </div>
                   <p className="text-xs text-muted-foreground sm:hidden">
                     {row.checkinCount} check-ins · {row.signupCount} sign-ups
                   </p>
@@ -157,7 +190,7 @@ export default async function EventLeaderboardPage({
                 <div className="shrink-0 text-right">
                   <p className="text-lg font-bold text-primary">{row.points}</p>
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                    points
+                    Event points
                   </p>
                 </div>
               </li>

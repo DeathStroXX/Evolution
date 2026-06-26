@@ -91,7 +91,7 @@ const EVENTS = {
     title: "AI Week Mainfranken 2026",
     description:
       "A week of talks, hands-on workshops, and live demos exploring how artificial intelligence and machine learning are transforming the Mainfranken region. Join researchers, engineers, and founders for deep-dives on LLMs, applied ML, and the future of AI in regional industry.",
-    startsAt: new Date("2026-06-22T10:00:00+02:00"),
+    startsAt: new Date("2026-07-16T10:00:00+02:00"),
     location: "ZDI Mainfranken, Würzburg",
     tags: ["AI", "Machine Learning"],
     coverImage:

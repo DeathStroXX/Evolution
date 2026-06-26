@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
-import { events } from "@/lib/collections";
-import type { Event } from "@/lib/types";
+import { events, rewardRules } from "@/lib/collections";
+import type { Event, RewardRule } from "@/lib/types";
 
 /**
  * Catalog seed — real Würzburg / Mainfranken region tech events.
@@ -36,6 +36,22 @@ function makeEvent(
   };
 }
 
+// Reward rules attached to two of this seed's events. Keyed by event TITLE
+// here; resolved to the freshly-inserted event _id at seed time (a RewardRule's
+// _id IS its eventId — see lib/types.ts). Threshold is the number of referred
+// sign-ups required, matching seed-demo.ts's "signup" mode.
+const SEED_REWARDS: Record<string, { rewardLabel: string; threshold: number }> =
+  {
+    "AI Vibe Hackathon #4": {
+      rewardLabel: "Hackathon Swag Bag",
+      threshold: 2,
+    },
+    "Data & Analytics Meetup #27": {
+      rewardLabel: "Free BARC Report",
+      threshold: 1,
+    },
+  };
+
 // Real, regional events. Dates are in CEST (+02:00) for the summer months.
 // Events that seed-demo.ts already owns (with reward rules + registrations) are
 // intentionally NOT included here — "AI Week Mainfranken 2026", "Startup Night
@@ -45,7 +61,7 @@ const seedData: SeedEvent[] = [
     title: "AI Vibe Hackathon #4",
     description:
       "Two days of AI prototyping as the finale of AI Week Mainfranken. Build real solutions with modern AI tools — free, collaborative, with challenges from IT-Verband Mainfranken.",
-    startsAt: new Date("2026-06-25T09:00:00+02:00"),
+    startsAt: new Date("2026-07-18T09:00:00+02:00"),
     location: "ZDI Idea Lab, Veitshöchheimer Str. 7, 97080 Würzburg",
     tags: ["AI", "Hackathon"],
     coverImage:
@@ -55,7 +71,7 @@ const seedData: SeedEvent[] = [
     title: "Data & Analytics Meetup #27",
     description:
       "From AI Hype to Business Impact: what companies in Mainfranken really need to do. Part of AI Week Mainfranken.",
-    startsAt: new Date("2026-06-25T18:00:00+02:00"),
+    startsAt: new Date("2026-07-20T18:00:00+02:00"),
     location: "Cube am Hubland, Würzburg",
     tags: ["AI", "IT"],
     coverImage:
@@ -115,7 +131,7 @@ const seedData: SeedEvent[] = [
     title: "GEO Strategy Workshop — AI Week",
     description:
       "Strategies for the era of Generative Engine Optimization. Hosted by IT-Verband Mainfranken Community of Practice.",
-    startsAt: new Date("2026-06-24T14:00:00+02:00"),
+    startsAt: new Date("2026-07-25T14:00:00+02:00"),
     location: "rockenstein AG, Würzburg",
     tags: ["AI", "Workshop"],
     coverImage:
@@ -141,6 +157,7 @@ async function main() {
   }
 
   const eventsCol = await events();
+  const rewardRulesCol = await rewardRules();
 
   // Scoped, idempotent cleanup — only this seed's events (and the old generic
   // seed's). Never deletes seed-demo.ts data (owned by Lisa's hashed id).
@@ -151,13 +168,46 @@ async function main() {
     `Deleted ${deletedCount} existing catalog event(s) (organizerId in "${ORGANIZER_ID}", "${LEGACY_ORGANIZER_ID}").`
   );
 
+  // Idempotent cleanup of this seed's reward rules. Event _ids are regenerated
+  // each run, so match on the stable reward labels to avoid orphaning old rules.
+  // Scoped to SEED_REWARDS labels only — never touches seed-demo.ts's rules.
+  const seedRewardLabels = Object.values(SEED_REWARDS).map((r) => r.rewardLabel);
+  const delRewards = await rewardRulesCol.deleteMany({
+    rewardLabel: { $in: seedRewardLabels },
+  });
+  console.log(
+    `Deleted ${delRewards.deletedCount} existing seed reward rule(s).`
+  );
+
   await eventsCol.insertMany(seedData as unknown as Event[]);
 
   for (const event of seedData) {
     console.log(`Inserted: ${event.title}`);
   }
 
-  console.log(`\nSeeded ${seedData.length} real region events.`);
+  // Attach reward rules to their events by title → _id. A RewardRule's _id is
+  // its eventId, so we read it off the just-inserted seed docs.
+  const rewardRuleDocs: RewardRule[] = seedData
+    .filter((event) => SEED_REWARDS[event.title])
+    .map((event) => ({
+      _id: event._id,
+      mode: "signup", // "N referrals" == N referred sign-ups
+      threshold: SEED_REWARDS[event.title].threshold,
+      rewardLabel: SEED_REWARDS[event.title].rewardLabel,
+    }));
+
+  if (rewardRuleDocs.length > 0) {
+    await rewardRulesCol.insertMany(rewardRuleDocs as unknown as RewardRule[]);
+    for (const rule of rewardRuleDocs) {
+      console.log(
+        `Reward rule: ${rule.rewardLabel} (${rule.threshold} ${rule.mode} referrals)`
+      );
+    }
+  }
+
+  console.log(
+    `\nSeeded ${seedData.length} real region events and ${rewardRuleDocs.length} reward rules.`
+  );
 }
 
 main()

@@ -18,7 +18,13 @@ function toISO(value?: Date | string) {
 
 async function getEvents(): Promise<SerializedEvent[]> {
   const col = await events();
-  const docs = await col.find({}).sort({ startsAt: 1 }).toArray();
+  // Only show upcoming events — hide anything whose start date is in the past.
+  // startsAt is stored as a Date (see lib/types.ts), so a direct $gte comparison
+  // against `now` works. Sorted soonest-first.
+  const docs = await col
+    .find({ startsAt: { $gte: new Date() } })
+    .sort({ startsAt: 1 })
+    .toArray();
 
   return docs.map((doc) => ({
     _id: String(doc._id),

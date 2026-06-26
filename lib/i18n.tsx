@@ -85,7 +85,7 @@ export const TRANSLATIONS: Record<string, Entry> = {
     de: "Steige auf, indem du Events teilst und die Community zusammenbringst.",
   },
   "points.currentTier": { en: "Current tier", de: "Aktuelle Stufe" },
-  "points.totalPoints": { en: "total points", de: "Gesamtpunkte" },
+  "points.totalPoints": { en: "Total points", de: "Gesamtpunkte" },
   "points.pointsTo": { en: "points to", de: "Punkte bis" },
   "points.achievements": { en: "Achievements", de: "Erfolge" },
   "points.badgesUnlocked": {

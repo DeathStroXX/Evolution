@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { TrendingUp } from "lucide-react";
 import {
   EventAnalytics,
   type PlatformDatum,
@@ -76,6 +77,31 @@ export default async function EventDetailPage({
     platform: shareStats.platformByReferrer.get(a.referrerId) ?? "—",
   }));
 
+  // "Top share platform" callout: which channel drove the most referred sign-ups
+  // for THIS event, by attributing each ambassador's sign-ups to their dominant
+  // share platform. When real attribution is sparse, fall back to the busiest
+  // share channel (which is itself sample data when the event has no shares).
+  const signupsByPlatform = new Map<string, number>();
+  for (const row of analyticsRows) {
+    if (row.platform === "—" || row.signups <= 0) continue;
+    signupsByPlatform.set(
+      row.platform,
+      (signupsByPlatform.get(row.platform) ?? 0) + row.signups
+    );
+  }
+  let topPlatform = "";
+  let topPlatformSignups = 0;
+  Array.from(signupsByPlatform.entries()).forEach(([platform, signups]) => {
+    if (signups > topPlatformSignups) {
+      topPlatform = platform;
+      topPlatformSignups = signups;
+    }
+  });
+  const topPlatformIsSample = topPlatformSignups === 0;
+  if (topPlatformIsSample) {
+    topPlatform = shareStats.platformBreakdown[0]?.label ?? "—";
+  }
+
   return (
     <div className="space-y-8">
       <div className="space-y-2">
@@ -118,6 +144,27 @@ export default async function EventDetailPage({
           value={event.seatLimit ?? "—"}
         />
       </div>
+
+      {topPlatform !== "—" && (
+        <div className="flex items-center gap-4 rounded-xl border border-primary/30 bg-primary/5 p-5">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+            <TrendingUp className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Top share platform{topPlatformIsSample ? " (sample data)" : ""}
+            </p>
+            <p className="text-lg font-bold text-foreground">{topPlatform}</p>
+            <p className="text-sm text-muted-foreground">
+              {topPlatformIsSample
+                ? "Most active sharing channel for this event"
+                : `Drove ${topPlatformSignups} referred sign-up${
+                    topPlatformSignups === 1 ? "" : "s"
+                  }`}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-3">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">

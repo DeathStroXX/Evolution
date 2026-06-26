@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { events, registrations } from "@/lib/collections";
+import { events, registrations, pointsLedger } from "@/lib/collections";
 import { getCurrentUser } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,8 +10,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import BulkIngestForm from "@/components/BulkIngestForm";
+import { SharePlatformChart } from "@/components/dashboard/SharePlatformChart";
+import { buildPlatformBreakdown } from "@/lib/shareStats";
+import type { PointsEntry } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+
+// Deterministic sample distribution for organizers without real share data yet,
+// so the demo dashboard always tells a story. Matched positionally to PLATFORMS
+// (WhatsApp, Telegram, LinkedIn, X, Reddit, Discord).
+const MOCK_SHARES = [45, 18, 28, 12, 5, 3];
 
 function formatDate(d?: Date) {
   if (!d) return "—";
@@ -62,6 +70,23 @@ export default async function DashboardPage() {
   const totalRegistrations = stats.reduce((sum, s) => sum + s.total, 0);
   const totalCheckins = stats.reduce((sum, s) => sum + s.checkedIn, 0);
 
+  // ---- Global share analytics across all of this organizer's events --------
+  const ledgerCol = await pointsLedger();
+  const ledgerEntries = eventIds.length
+    ? ((await ledgerCol
+        .find({ eventId: { $in: eventIds } })
+        .toArray()) as PointsEntry[])
+    : [];
+
+  const shareEntries = ledgerEntries.filter((e) => e.reason === "share");
+  const { breakdown: sharePlatforms, totalShares, isMock: sharesAreMock } =
+    buildPlatformBreakdown(shareEntries, MOCK_SHARES);
+
+  // Driven-by-referral totals come from the points ledger (not registrations).
+  const signupsDriven = ledgerEntries.filter((e) => e.reason === "signup").length;
+  const checkinsDriven = ledgerEntries.filter((e) => e.reason === "checkin").length;
+  const topPlatform = sharePlatforms[0]?.label ?? "—";
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -81,6 +106,33 @@ export default async function DashboardPage() {
         <StatCard label="Registrations" value={totalRegistrations} />
         <StatCard label="Check-ins" value={totalCheckins} />
       </div>
+
+      {/* Share Activity — aggregated across every event this organizer owns. */}
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Share Activity
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            How your community is spreading the word across all your events
+            {sharesAreMock ? " (sample data)" : ""}.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <StatCard label="Total shares" value={totalShares} />
+          <StatCard label="Signups driven" value={signupsDriven} />
+          <StatCard label="Check-ins driven" value={checkinsDriven} />
+          <StatCard label="Best platform" value={topPlatform} />
+        </div>
+
+        <SharePlatformChart
+          title="Most used share platforms"
+          description="Which channels drive the most sharing across all your events"
+          platform={sharePlatforms}
+          isMock={sharesAreMock}
+        />
+      </section>
 
       <BulkIngestForm />
 
@@ -159,7 +211,13 @@ export default async function DashboardPage() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
+function StatCard({
+  label,
+  value,
+}: {
+  label: string;
+  value: number | string;
+}) {
   return (
     <Card>
       <CardContent className="p-6">
