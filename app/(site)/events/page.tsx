@@ -10,23 +10,85 @@ import ActivityTicker from "@/components/ActivityTicker";
 // Events come from MongoDB at request time — never statically prerender.
 export const dynamic = "force-dynamic";
 
+// Tags that signal an event is relevant to our IT/tech audience. Used to rank
+// and cap external-source events so the catalog stays on-topic.
+const TECH_TAGS = new Set([
+  "ai",
+  "machine learning",
+  "it",
+  "tech",
+  "software",
+  "engineering",
+  "developer",
+  "devops",
+  "cloud",
+  "data",
+  "design",
+  "startup",
+  "startups",
+  "hackathon",
+  "career",
+  "networking",
+  "product",
+  "cyber",
+  "robotics",
+]);
+
+// Cap on how many external-source events appear in the catalog at once.
+const MAX_EXTERNAL_EVENTS = 6;
+
+// Flagship event pinned to the top of the catalog, ahead of date ordering.
+const PINNED_EVENT_TITLE = "AI Week Mainfranken 2026";
+
 function toISO(value?: Date | string) {
   if (!value) return undefined;
   const d = value instanceof Date ? value : new Date(value);
   return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
 }
 
+function startTime(value?: Date | string) {
+  if (!value) return Number.POSITIVE_INFINITY;
+  const d = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(d.getTime()) ? Number.POSITIVE_INFINITY : d.getTime();
+}
+
+// How many tech-relevant tags an event carries. Higher = more on-topic.
+function techScore(tags?: string[]) {
+  return (tags ?? []).filter((t) => TECH_TAGS.has(t.toLowerCase())).length;
+}
+
 async function getEvents(): Promise<SerializedEvent[]> {
   const col = await events();
   // Only show upcoming events — hide anything whose start date is in the past.
   // startsAt is stored as a Date (see lib/types.ts), so a direct $gte comparison
-  // against `now` works. Sorted soonest-first.
-  const docs = await col
-    .find({ startsAt: { $gte: new Date() } })
-    .sort({ startsAt: 1 })
-    .toArray();
+  // against `now` works.
+  const docs = await col.find({ startsAt: { $gte: new Date() } }).toArray();
 
-  return docs.map((doc) => ({
+  // External-source events (those that link out) are de-cluttered: keep only
+  // the tech-relevant ones, capped at MAX_EXTERNAL_EVENTS. Clearly off-topic
+  // ones (children's events, museum tours, food, etc.) carry no tech tags and
+  // are dropped here. Internal/seeded events are always kept.
+  const internal = docs.filter((d) => !d.sourceUrl);
+  const external = docs
+    .filter((d) => d.sourceUrl && techScore(d.tags) > 0)
+    .sort(
+      (a, b) =>
+        techScore(b.tags) - techScore(a.tags) ||
+        startTime(a.startsAt) - startTime(b.startsAt)
+    )
+    .slice(0, MAX_EXTERNAL_EVENTS);
+
+  // AI Week is our flagship event — pin it to the top. Everything else, seeded
+  // and external alike, is mixed together and ordered soonest-first so the
+  // catalog reads as one organic timeline rather than grouped buckets.
+  const ordered = [...internal, ...external].sort((a, b) => {
+    const aPinned = a.title === PINNED_EVENT_TITLE;
+    const bPinned = b.title === PINNED_EVENT_TITLE;
+    if (aPinned !== bPinned) return aPinned ? -1 : 1;
+    return startTime(a.startsAt) - startTime(b.startsAt);
+  });
+
+  return ordered.map((doc) => ({
     _id: String(doc._id),
     title: doc.title,
     description: doc.description,

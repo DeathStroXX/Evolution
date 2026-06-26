@@ -108,7 +108,7 @@ const EVENTS = {
     tags: ["Startups", "Networking"],
     coverImage:
       "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=400&fit=crop",
-    reward: { rewardLabel: "VIP Dinner with Founders", threshold: 5 },
+    reward: { rewardLabel: "€50 Lovable Credit", threshold: 5 },
   },
   dv: {
     _id: randomUUID(),
@@ -120,7 +120,7 @@ const EVENTS = {
     tags: ["DevOps", "Cloud"],
     coverImage:
       "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&h=400&fit=crop",
-    reward: { rewardLabel: "JetBrains License (1 Year)", threshold: 2 },
+    reward: { rewardLabel: "3 Months Free Notion Plus", threshold: 2 },
   },
 } as const;
 type EventKey = keyof typeof EVENTS;

@@ -43,11 +43,11 @@ function makeEvent(
 const SEED_REWARDS: Record<string, { rewardLabel: string; threshold: number }> =
   {
     "AI Vibe Hackathon #4": {
-      rewardLabel: "Hackathon Swag Bag",
+      rewardLabel: "€100 Vercel Credit",
       threshold: 2,
     },
     "Data & Analytics Meetup #27": {
-      rewardLabel: "Free BARC Report",
+      rewardLabel: "Deepnote Pro (6 Months)",
       threshold: 1,
     },
   };
@@ -203,6 +203,23 @@ async function main() {
         `Reward rule: ${rule.rewardLabel} (${rule.threshold} ${rule.mode} referrals)`
       );
     }
+  }
+
+  // Self-heal orphaned reward rules — ones whose event no longer exists (e.g.
+  // left behind when a reward label was renamed, since the label-based cleanup
+  // above can't match the old name). A RewardRule's _id IS its eventId, so any
+  // rule pointing at a missing event is dead weight. Safe to sweep globally:
+  // both seeds have inserted their events by now, so live rules always match.
+  const allEventIds = (
+    await eventsCol.find({}, { projection: { _id: 1 } }).toArray()
+  ).map((e) => e._id);
+  const delOrphans = await rewardRulesCol.deleteMany({
+    _id: { $nin: allEventIds },
+  });
+  if (delOrphans.deletedCount > 0) {
+    console.log(
+      `Removed ${delOrphans.deletedCount} orphaned reward rule(s) with no matching event.`
+    );
   }
 
   console.log(

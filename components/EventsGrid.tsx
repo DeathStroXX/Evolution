@@ -26,6 +26,16 @@ export interface EventSocial {
 
 const FILTERS = ["All", "AI", "IT", "Startup", "Design", "Community"] as const;
 
+// Fallback covers for events that ship without an image (mostly external-source
+// events). Assigned by index so adjacent imageless cards look distinct, instead
+// of falling back to the bare letter placeholder.
+const FALLBACK_COVERS = [
+  "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&h=400&fit=crop",
+];
+
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",
@@ -101,7 +111,10 @@ function RewardBanner({ eventId }: { eventId: string }) {
     };
   }, [eventId]);
 
-  if (!rule) return null;
+  // Only surface rewards that feel worth chasing. Low-threshold rewards (1–2
+  // referrals) look too easy on a catalog card, so we hide their banner here —
+  // the reward still exists and shows on the event detail page.
+  if (!rule || rule.threshold < 3) return null;
 
   return (
     <div className="mt-auto flex items-center gap-2 border-t border-border bg-primary/10 px-6 py-3 text-sm font-semibold text-foreground">
@@ -145,6 +158,18 @@ export default function EventsGrid({
     () => new Set(registeredEventIds),
     [registeredEventIds]
   );
+
+  // Map each imageless event to a fallback cover, keyed by its index in the full
+  // list so the assignment is stable regardless of the active tag filter.
+  const fallbackCoverById = useMemo(() => {
+    const map = new Map<string, string>();
+    events.forEach((event, index) => {
+      if (!event.coverImage && !event.imageUrl) {
+        map.set(event._id, FALLBACK_COVERS[index % FALLBACK_COVERS.length]);
+      }
+    });
+    return map;
+  }, [events]);
 
   const filtered = useMemo(() => {
     if (active === "All") return events;
@@ -204,6 +229,10 @@ export default function EventsGrid({
           {filtered.map((event) => {
             const proof = social[event._id];
             const isRegistered = registeredSet.has(event._id);
+            const cover =
+              event.coverImage ||
+              event.imageUrl ||
+              fallbackCoverById.get(event._id);
             return (
               <Link
                 key={event._id}
@@ -224,10 +253,10 @@ export default function EventsGrid({
                   </span>
                 )}
                 {/* Cover image / placeholder */}
-                {event.coverImage || event.imageUrl ? (
+                {cover ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={event.coverImage || event.imageUrl}
+                    src={cover}
                     alt={event.title}
                     loading="lazy"
                     className="aspect-[2/1] w-full bg-muted object-cover transition-transform duration-300 group-hover:scale-[1.03]"
