@@ -38,6 +38,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import ReferralImpact from "@/components/ReferralImpact";
 import MeCelebration from "@/components/MeCelebration";
+import { T } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -68,6 +69,14 @@ const BADGE_ICONS: Record<string, LucideIcon> = {
   connector: Users,
   "crowd-puller": Megaphone,
   "community-champion": Crown,
+};
+
+// Map badge keys → i18n keys for their display labels.
+const BADGE_I18N: Record<string, string> = {
+  "first-share": "badge.firstShare",
+  connector: "badge.connector",
+  "crowd-puller": "badge.crowdPuller",
+  "community-champion": "badge.champion",
 };
 
 export default async function MePage() {
@@ -131,9 +140,11 @@ export default async function MePage() {
       <MeCelebration tier={tier.tier} tierIndex={tier.tierIndex} />
 
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Your points</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          <T k="points.title" />
+        </h1>
         <p className="mt-1 text-muted-foreground">
-          Level up by sharing events and bringing the community together.
+          <T k="points.subtitle" />
         </p>
       </header>
 
@@ -166,7 +177,9 @@ export default async function MePage() {
         </Card>
       ) : (
         <div className="flex flex-col gap-4">
-          <h2 className="text-lg font-semibold">By event</h2>
+          <h2 className="text-lg font-semibold">
+            <T k="points.byEvent" />
+          </h2>
           {eventBreakdowns.map((b) => {
             const rule = rulesByEvent.get(b.eventId);
             const title = eventTitles.get(b.eventId) ?? "Untitled event";
@@ -201,13 +214,17 @@ function TierCard({ points, tier }: { points: number; tier: TierProgress }) {
               <Icon className="h-6 w-6" />
             </span>
             <div>
-              <p className="text-sm text-muted-foreground">Current tier</p>
+              <p className="text-sm text-muted-foreground">
+                <T k="points.currentTier" />
+              </p>
               <p className="text-2xl font-bold">{tier.tier}</p>
             </div>
           </div>
           <div className="text-right">
             <p className="text-3xl font-bold text-primary">{points}</p>
-            <p className="text-sm text-muted-foreground">total points</p>
+            <p className="text-sm text-muted-foreground">
+              <T k="points.totalPoints" />
+            </p>
           </div>
         </div>
 
@@ -220,7 +237,7 @@ function TierCard({ points, tier }: { points: number; tier: TierProgress }) {
                 <span className="font-semibold text-foreground">
                   {tier.pointsToNext}
                 </span>{" "}
-                points to {tier.nextTier}
+                <T k="points.pointsTo" /> {tier.nextTier}
               </span>
             ) : (
               <span className="font-semibold text-primary">
@@ -242,9 +259,14 @@ function BadgesSection({ badges }: { badges: BadgeDef[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Achievements</CardTitle>
+        <CardTitle>
+          <T k="points.achievements" />
+        </CardTitle>
         <CardDescription>
-          {earnedCount} of {badges.length} badges unlocked.
+          <T
+            k="points.badgesUnlocked"
+            p={{ n: earnedCount, total: badges.length }}
+          />
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -271,7 +293,9 @@ function BadgesSection({ badges }: { badges: BadgeDef[] }) {
                 >
                   <Icon className="h-6 w-6" />
                 </span>
-                <span className="text-sm font-semibold">{b.label}</span>
+                <span className="text-sm font-semibold">
+                  {BADGE_I18N[b.key] ? <T k={BADGE_I18N[b.key]} /> : b.label}
+                </span>
                 <span className="text-xs text-muted-foreground">
                   {b.description}
                 </span>
@@ -334,13 +358,13 @@ function EventCard({
             <Progress value={progressValue} />
             {unlocked && (
               <p className="text-sm font-semibold text-primary">
-                Reward unlocked: {rule.rewardLabel}
+                <T k="event.reward.unlocked" />: {rule.rewardLabel}
               </p>
             )}
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">
-            No reward set for this event yet.
+            <T k="points.noReward" />
           </p>
         )}
 

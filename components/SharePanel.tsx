@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 type Status = "loading" | "anonymous" | "ready" | "error";
@@ -202,6 +203,7 @@ export default function SharePanel({
   eventLocation?: string;
   reward?: EventReward | null;
 }) {
+  const { t } = useLanguage();
   const [status, setStatus] = useState<Status>("loading");
   const [code, setCode] = useState<string | null>(null);
   const [origin, setOrigin] = useState("");
@@ -334,26 +336,25 @@ export default function SharePanel({
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-foreground">
           <span className="inline-block h-5 w-1.5 rounded-full bg-primary" />
-          Share &amp; earn points
+          {t("share.title")}
         </CardTitle>
-        <CardDescription>
-          Invite friends with your personal link. You earn points when they
-          register and check in.
-        </CardDescription>
+        <CardDescription>{t("share.subtitle")}</CardDescription>
       </CardHeader>
       <CardContent>
         {reward && referralCount !== null && (
           <div className="mb-6 rounded-lg border border-primary/30 bg-primary/10 p-4">
-            <div className="flex items-baseline justify-between gap-2 text-sm font-semibold text-foreground">
-              <span>
-                {Math.min(referralCount, reward.threshold)}/{reward.threshold}{" "}
-                referral{reward.threshold === 1 ? "" : "s"}
-              </span>
-              <span className="text-foreground/70">
-                {referralCount >= reward.threshold
-                  ? `Earned ${reward.rewardLabel} 🎉`
-                  : `earn a ${reward.rewardLabel}`}
-              </span>
+            <div className="text-sm font-semibold text-foreground">
+              {referralCount >= reward.threshold ? (
+                <span>{t("event.reward.unlocked")} 🎉</span>
+              ) : (
+                <span>
+                  {t("share.progress", {
+                    n: Math.min(referralCount, reward.threshold),
+                    total: reward.threshold,
+                    reward: reward.rewardLabel,
+                  })}
+                </span>
+              )}
             </div>
             <div
               className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary"
@@ -481,11 +482,11 @@ export default function SharePanel({
                 >
                   {copied ? (
                     <>
-                      <Check className="size-4" /> Copied!
+                      <Check className="size-4" /> {t("share.copied")}
                     </>
                   ) : (
                     <>
-                      <Copy className="size-4" /> Copy link
+                      <Copy className="size-4" /> {t("share.copyLink")}
                     </>
                   )}
                 </Button>

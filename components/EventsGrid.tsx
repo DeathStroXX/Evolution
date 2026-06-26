@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export interface SerializedEvent {
@@ -136,6 +137,7 @@ export default function EventsGrid({
   social?: Record<string, EventSocial>;
   registeredEventIds?: string[];
 }) {
+  const { t } = useLanguage();
   const [active, setActive] = useState<string>("All");
 
   const registeredSet = useMemo(
@@ -169,7 +171,7 @@ export default function EventsGrid({
                   : "border-border bg-white text-foreground/70 hover:border-primary hover:text-foreground"
               )}
             >
-              {filter}
+              {filter === "All" ? t("events.allFilter") : filter}
             </button>
           );
         })}
@@ -210,7 +212,7 @@ export default function EventsGrid({
               <Card className="relative flex h-full flex-col overflow-hidden rounded-xl border-border shadow-sm transition-all duration-200 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-md group-focus-visible:ring-2 group-focus-visible:ring-ring">
                 {isRegistered && (
                   <span className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground shadow">
-                    Registered ✓
+                    {t("events.registered")} ✓
                   </span>
                 )}
                 {/* Cover image / placeholder */}
@@ -274,7 +276,7 @@ export default function EventsGrid({
                       ))}
                     </div>
                     <span className="text-sm font-medium text-muted-foreground">
-                      {proof.count === 1 ? "1 going" : `${proof.count} going`}
+                      {proof.count} {t("events.going")}
                     </span>
                   </div>
                 )}

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import QRCode from "qrcode";
+import { useLanguage } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 
 type Status =
@@ -41,6 +42,7 @@ export default function RegisterButton({
   reward?: EventReward | null;
 }) {
   const searchParams = useSearchParams();
+  const { t } = useLanguage();
   const ref = searchParams.get("ref") ?? undefined;
 
   const [status, setStatus] = useState<Status>("loading");
@@ -252,7 +254,7 @@ export default function RegisterButton({
           onClick={handleRegister}
           disabled={submitting}
         >
-          {submitting ? "Registering…" : "Register"}
+          {submitting ? `${t("event.register")}…` : t("event.register")}
         </Button>
       </div>
       {error && (

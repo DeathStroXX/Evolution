@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useLanguage } from "@/lib/i18n";
 
 interface ImpactData {
   peopleBrought: number;
@@ -24,6 +25,7 @@ type State =
  * /api/points and headlines how many people they've brought to events.
  */
 export default function ReferralImpact() {
+  const { t } = useLanguage();
   const [state, setState] = useState<State>({ status: "loading" });
 
   useEffect(() => {
@@ -48,10 +50,8 @@ export default function ReferralImpact() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Your referral impact</CardTitle>
-        <CardDescription>
-          The ripple effect of the events you&rsquo;ve shared.
-        </CardDescription>
+        <CardTitle>{t("points.impact")}</CardTitle>
+        <CardDescription>{t("points.impactSubtitle")}</CardDescription>
       </CardHeader>
       <CardContent>
         {state.status === "loading" && (
@@ -69,24 +69,20 @@ export default function ReferralImpact() {
         {state.status === "ready" && (
           <div className="flex flex-col gap-6">
             <p className="text-lg">
-              You&rsquo;ve brought{" "}
-              <span className="text-3xl font-bold text-primary">
-                {state.data.peopleBrought}
-              </span>{" "}
-              {state.data.peopleBrought === 1 ? "person" : "people"} to events.
+              {t("points.brought", { n: state.data.peopleBrought })}
             </p>
 
             <div className="grid grid-cols-3 gap-4">
               <ImpactStat
-                label="Shares"
+                label={t("points.shares")}
                 value={state.data.countByReason.share}
               />
               <ImpactStat
-                label="Sign-ups driven"
+                label={t("points.signups")}
                 value={state.data.countByReason.signup}
               />
               <ImpactStat
-                label="Check-ins driven"
+                label={t("points.checkins")}
                 value={state.data.countByReason.checkin}
               />
             </div>

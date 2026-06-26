@@ -9,6 +9,7 @@ import {
   rewardRules,
   pointsLedger,
 } from "@/lib/collections";
+import { T } from "@/lib/i18n";
 import { Badge } from "@/components/ui/badge";
 import RegisterButton from "@/components/RegisterButton";
 import SharePanel from "@/components/SharePanel";
@@ -179,7 +180,7 @@ export default async function EventDetailPage({
           href={`/events/${event._id}/leaderboard`}
           className="mt-4 inline-flex items-center gap-2 rounded-full border-2 border-primary bg-primary/10 px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-primary/20"
         >
-          🏆 View referral leaderboard
+          🏆 <T k="event.leaderboard" />
         </Link>
 
         <dl className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -207,7 +208,7 @@ export default async function EventDetailPage({
             </span>
             <div>
               <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                When
+                <T k="event.when" />
               </dt>
               <dd className="text-sm font-medium">
                 {formatDateTime(event.startsAt)}
@@ -235,7 +236,7 @@ export default async function EventDetailPage({
               </span>
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Where
+                  <T k="event.where" />
                 </dt>
                 <dd className="text-sm font-medium">{event.location}</dd>
               </div>
@@ -268,14 +269,13 @@ export default async function EventDetailPage({
                 </span>
                 <div className="min-w-0 flex-1 space-y-1">
                   <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
-                    What you can earn
+                    <T k="event.reward.title" />
                   </p>
                   <h2 className="text-2xl font-bold leading-tight text-foreground">
                     {reward.rewardLabel}
                   </h2>
                   <p className="text-sm font-medium text-foreground/80">
-                    Refer {reward.threshold} friend
-                    {reward.threshold === 1 ? "" : "s"} who attend
+                    <T k="event.reward.refer" p={{ n: reward.threshold }} />
                   </p>
                 </div>
               </div>
@@ -285,13 +285,19 @@ export default async function EventDetailPage({
                   <div className="flex items-baseline justify-between text-sm font-semibold">
                     <span className="text-foreground">
                       {Math.min(userReferralCount, reward.threshold)}/
-                      {reward.threshold} referral
-                      {reward.threshold === 1 ? "" : "s"}
+                      {reward.threshold} <T k="event.reward.referrals" />
                     </span>
                     <span className="text-foreground/60">
-                      {userReferralCount >= reward.threshold
-                        ? "Reward unlocked 🎉"
-                        : `${reward.threshold - userReferralCount} to go`}
+                      {userReferralCount >= reward.threshold ? (
+                        <>
+                          <T k="event.reward.unlocked" /> 🎉
+                        </>
+                      ) : (
+                        <>
+                          {reward.threshold - userReferralCount}{" "}
+                          <T k="event.reward.toGo" />
+                        </>
+                      )}
                     </span>
                   </div>
                   <div
@@ -316,7 +322,7 @@ export default async function EventDetailPage({
 
               <p className="mt-6 flex items-center gap-2 rounded-lg bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
                 <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />
-                Reward can be redeemed after the event — verified by check-in
+                <T k="event.reward.redeemNote" />
               </p>
             </div>
           </div>

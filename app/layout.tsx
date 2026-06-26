@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { LanguageProvider } from "@/lib/i18n";
 import { PointsToast } from "@/components/PointsToast";
 import { Confetti } from "@/components/Confetti";
 
@@ -17,9 +18,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        {children}
-        <PointsToast />
-        <Confetti />
+        <LanguageProvider>
+          {children}
+          <PointsToast />
+          <Confetti />
+        </LanguageProvider>
       </body>
     </html>
   );

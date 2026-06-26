@@ -2,12 +2,14 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useLanguage } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
 function AuthForm() {
   const router = useRouter();
+  const { t } = useLanguage();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/events";
   // Context cues only — these don't affect where login sends the user.
@@ -57,18 +59,18 @@ function AuthForm() {
         <span className="mb-2 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-base font-black text-primary-foreground">
           IT
         </span>
-        <CardTitle className="text-2xl">Join or sign in</CardTitle>
-        <CardDescription>
-          No password needed — just your name and email
-        </CardDescription>
+        <CardTitle className="text-2xl">{t("auth.title")}</CardTitle>
+        <CardDescription>{t("auth.subtitle")}</CardDescription>
       </CardHeader>
       <CardContent>
         {cameFromRedirect && (
           <div className="mb-4 rounded-md border border-primary/30 bg-primary/5 px-3 py-2.5 text-sm">
-            <p className="font-medium text-foreground">Sign in to continue</p>
+            <p className="font-medium text-foreground">
+              {t("auth.signInToContinue")}
+            </p>
             {wasInvited && (
               <p className="mt-0.5 text-muted-foreground">
-                You were invited! Sign in to claim your spot.
+                {t("auth.invited")}
               </p>
             )}
           </div>
@@ -113,7 +115,7 @@ function AuthForm() {
           )}
 
           <Button type="submit" size="lg" disabled={submitting} className="mt-1">
-            {submitting ? "Continuing…" : "Continue"}
+            {submitting ? `${t("auth.continue")}…` : t("auth.continue")}
           </Button>
         </form>
       </CardContent>

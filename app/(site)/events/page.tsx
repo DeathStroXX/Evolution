@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { events, registrations, profiles } from "@/lib/collections";
+import { T } from "@/lib/i18n";
 import EventsGrid, {
   type SerializedEvent,
   type EventSocial,
@@ -89,11 +90,10 @@ export default async function EventsPage() {
       <header className="mb-10 max-w-2xl">
         <span className="inline-block h-1.5 w-12 rounded-full bg-primary" />
         <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-          IT-Events in der Region
+          <T k="events.title" />
         </h1>
         <p className="mt-3 text-muted-foreground">
-          Discover meetups, workshops, and gatherings across the Mainfranken
-          tech community. We look forward to seeing you there.
+          <T k="events.subtitle" />
         </p>
       </header>
 

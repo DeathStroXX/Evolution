@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/lib/i18n";
 
 interface ActivityItem {
   userName: string;
@@ -81,6 +82,7 @@ type State =
   | { status: "ready"; items: ActivityItem[] };
 
 export default function ActivityTicker() {
+  const { t } = useLanguage();
   const [state, setState] = useState<State>({ status: "loading" });
   const [index, setIndex] = useState(0);
 
@@ -132,7 +134,7 @@ export default function ActivityTicker() {
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
         </span>
-        <span className="hidden text-[11px] sm:inline">Live</span>
+        <span className="hidden text-[11px] sm:inline">{t("ticker.live")}</span>
       </span>
 
       {/* key={index} remounts the line so the CSS enter animation replays. */}

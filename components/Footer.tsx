@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { T } from "@/lib/i18n";
 
 const footerLinks = [
   { href: "/events", label: "Events", external: false },
@@ -30,8 +31,7 @@ export default function Footer() {
               </span>
             </div>
             <p className="mt-3 text-sm leading-relaxed text-neutral-400">
-              Find, share, and connect with the local tech community across the
-              Mainfranken region.
+              <T k="footer.tagline" />
             </p>
           </div>
 
