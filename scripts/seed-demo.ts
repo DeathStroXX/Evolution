@@ -108,7 +108,7 @@ const EVENTS = {
     tags: ["Startups", "Networking"],
     coverImage:
       "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=400&fit=crop",
-    reward: { rewardLabel: "Exclusive AI Workshop Pass", threshold: 5 },
+    reward: { rewardLabel: "Free Döner at Berlin Döner Kebap", threshold: 5 },
   },
   dv: {
     _id: randomUUID(),
